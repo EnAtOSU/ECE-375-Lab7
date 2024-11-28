@@ -58,7 +58,7 @@ INIT:
 		;Set Normal mode
 
 	;Other
-
+	rcall LCDInit
 
 ;***********************************************************
 ;*  Main Program

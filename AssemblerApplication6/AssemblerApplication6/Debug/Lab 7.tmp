@@ -24,10 +24,10 @@
  </OUTPUT_FILES>
  <LABELS>
   <INIT><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>44</LINE></INIT>
+  <LCDInit><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>71</LINE></LCDInit>
   <MAIN><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>66</LINE></MAIN>
   <STRING_START><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>84</LINE></STRING_START>
   <STRING_END><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>90</LINE></STRING_END>
-  <LCDInit><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>71</LINE></LCDInit>
   <LCDDelay><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>502</LINE></LCDDelay>
   <LCD_Internal_WriteCMD><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>486</LINE></LCD_Internal_WriteCMD>
   <LCDBacklightOn><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>123</LINE></LCDBacklightOn>
