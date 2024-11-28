@@ -70,19 +70,6 @@ INIT:
 ;*  Main Program
 ;***********************************************************
 MAIN:
-ldi ZL, low(str_rock<<1)
-ldi ZH, high(str_rock<<1)
-ldi YL, low(str_rock_end<<1)
-ldi YH, high(str_rock_end<<1)
-rcall print_zy_top
-
-ldi ZL, low(str_paper<<1)
-ldi ZH, high(str_paper<<1)
-ldi YL, low(str_paper_end<<1)
-ldi YH, high(str_paper_end<<1)
-rcall print_zy_top
-
-
 
 end_main:
 		rjmp end_main
