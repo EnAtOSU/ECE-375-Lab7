@@ -70,22 +70,9 @@ INIT:
 ;*  Main Program
 ;***********************************************************
 MAIN:
-ldi ZL, low(str_rock<<1)
-ldi ZH, high(str_rock<<1)
-ldi YL, low(str_rock_end<<1)
-ldi YH, high(str_rock_end<<1)
-rcall print_zy_top
-
-ldi ZL, low(str_paper<<1)
-ldi ZH, high(str_paper<<1)
-ldi YL, low(str_paper_end<<1)
-ldi YH, high(str_paper_end<<1)
-rcall print_zy_top
 
 
-
-end_main:
-		rjmp end_main
+		rjmp	MAIN
 
 ;***********************************************************
 ;*	Functions and Subroutines
@@ -107,7 +94,6 @@ push ZH
 push YL
 push YH
 
-rcall	LCDClrLn1 ;clear line to be writen to
 ldi XL, LOW(lcd_buffer_addr) ;point X to the top line of the LCD buffer address in data memory
 ldi XH, HIGH(lcd_buffer_addr)
 
@@ -119,7 +105,6 @@ cp ZL, YL  ;compare where Z points (current address) to Y (end of string), we on
 brne print_zy_top_loop ;if not at end keep loading LCD buffer
 
 rcall LCDWrite ;once done write to LCD
-
 pop YH
 pop YL
 pop ZH
@@ -144,7 +129,6 @@ push ZH
 push YL
 push YH
 
-rcall	LCDClrLn2 ;clear line to be writen to
 ldi XL, LOW(lcd_buffer_addr+16) ;point x to the bottom line of the LCD buffer address in data memory
 ldi XH, HIGH(lcd_buffer_addr+16)
 
@@ -179,7 +163,7 @@ str_rock:
 str_rock_end:
 
 str_paper:
-.db "paper "
+.db "paper"
 str_paper_end:
 
 str_scissors:
@@ -195,7 +179,7 @@ str_win:
 str_win_end:
 
 str_welcome1:
-.db "welcome "
+.db "welcome"
 str_welcome1_end:
 
 str_welcome2:
