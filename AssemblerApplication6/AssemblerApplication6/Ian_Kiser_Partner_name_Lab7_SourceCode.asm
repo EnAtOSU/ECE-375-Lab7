@@ -82,7 +82,11 @@ MAIN:
 ; after the .DB directive; these can help to access the data
 ;-----------------------------------------------------------
 STRING_START:
-    .DB		"Welcome!"		; Declaring data in ProgMem
+    .DB		"Rock"		; Declaring data in ProgMem
+	.DB		"Paper"
+	.DB		"Scissors"
+	.DB		"Win!"
+	.DB		"Lose"
 STRING_END:
 
 ;***********************************************************
