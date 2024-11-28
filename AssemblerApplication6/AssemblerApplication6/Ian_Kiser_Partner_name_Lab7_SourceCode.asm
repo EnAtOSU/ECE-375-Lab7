@@ -49,10 +49,15 @@ INIT:
 	out SPL, mpr ;load ramend low into stack pointer low via mpr, out is needed as SP(stack pointer) is in io mem
 	ldi mpr, high(RAMEND);retrieve ramend high from program memory
 	out SPH, mpr ;load ramend high into stack pointer low via mpr
+	
 	;I/O Ports
+	;port D -> input for button presses, 
+	;port B -> output for LED countdown/timer counter
+
+
 
 	;USART1
-		;Set baudrate at 2400bps
+		;Set baudrate at 2400bps -> I believe system clock is 1MHz, therefore UBRR gets 25 by table 18-4 in data sheet
 		;Enable receiver and transmitter
 		;Set frame format: 8 data bits, 2 stop bits
 
@@ -70,6 +75,31 @@ INIT:
 ;*  Main Program
 ;***********************************************************
 MAIN:
+
+;launch to welcome screen, poll for PD7
+;loop until PD7 pressed
+
+;PD7 pressed
+;ready transmit
+;display ready and waiting screen
+
+;ready recieved
+;start LED timer
+;display game start
+
+;PD4 selects play option
+
+;timer ends
+;display choices
+;timer start again
+
+;timer ends
+;display win/lose screen
+;timer start again
+
+;timer ends
+;restart code
+
 
 end_main:
 		rjmp end_main
@@ -105,7 +135,7 @@ st X+, mpr ;Store that character to the beginning of the LCD buffer, then increm
 cp ZL, YL  ;compare where Z points (current address) to Y (end of string), we only need Low byte since start and end are definitely far enough away to cause roll over errors
 brne print_zy_top_loop ;if not at end keep loading LCD buffer
 
-rcall LCDWrite ;once done write to LCD
+rcall	LCDWrLn1 ;once done write to LCD
 
 pop YH
 pop YL
@@ -115,6 +145,10 @@ pop XH
 pop XL 
 pop mpr
 ret
+;end print_zy_bottom
+
+
+
 
 ;***********************************************************
 ;*	Func: print_zy_bottom
@@ -142,7 +176,7 @@ st X+, mpr ;Store that character to the beginning of the LCD buffer, then increm
 cp ZL, YL ;compare where Z points (current address) to Y (end of string), we only need Low byte since start and end are definitely far enough away to cause roll over errors
 brne print_zy_bottom_loop ;if not at end keep loading LCD buffer
 
-rcall LCDWrite ;once done write to LCD 
+rcall	LCDWrLn2 ;once done write to LCD 
 
 pop YH
 pop YL
@@ -152,6 +186,10 @@ pop XH
 pop XL 
 pop mpr
 ret
+;end print_zy_bottom
+
+
+
 
 ;***********************************************************
 ;*	Stored Program Data
@@ -180,6 +218,10 @@ str_lose_end:
 str_win:
 .db "You Win!"
 str_win_end:
+
+str_draw:
+.db "You Draw! "
+str_draw_end:
 
 str_welcome1:
 .db "welcome "
