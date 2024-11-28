@@ -19,7 +19,9 @@
 ;***********************************************************
 ;*  Internal Register Definitions and Constants
 ;***********************************************************
-.def    mpr = r16               ; Multi-Purpose Register
+.def    mpr = r16               ; Multi-Purpose Register		
+;r20-r22 reserved
+
 
 ; Use this signal code between two boards for their game ready
 .equ    SendReady = 0b11111111
@@ -55,23 +57,98 @@ INIT:
 		;Set frame format: 8 data bits, 2 stop bits
 
 	;TIMER/COUNTER1
-		;Set Normal mode
+	;Set Normal mode
 
 	;Other
 	rcall LCDInit
+	rcall LCDBacklightOn 
+	rcall LCDClr
+
+
 
 ;***********************************************************
 ;*  Main Program
 ;***********************************************************
 MAIN:
 
-	;TODO: ???
 
 		rjmp	MAIN
 
 ;***********************************************************
 ;*	Functions and Subroutines
 ;***********************************************************
+
+
+;***********************************************************
+;*	Func: print_zy_top
+;*	desc: stores string stored in program memory and writes it to the top line of the LCD screen
+;*	REMEMBER: the address stored in z and in y must be initially bit shifted by 1 due to least sig bit being low or high indicator. 
+;*	WARNING - assumes Z stores the address of the beginning of the string and Y stores the end of the string to print.
+;***********************************************************
+print_zy_top:
+push mpr
+push XL
+push XH
+push ZL
+push ZH
+push YL
+push YH
+
+ldi XL, LOW(lcd_buffer_addr) ;point X to the top line of the LCD buffer address in data memory
+ldi XH, HIGH(lcd_buffer_addr)
+
+print_zy_top_loop:
+lpm mpr, Z+ ;load value stored at the address to the beginning of the string (stored in X) to mpr, then inc X to point to next char. ie. first character of string is loaded into mpr
+st X+, mpr ;Store that character to the beginning of the LCD buffer, then increment to next spot in LCD buffer
+
+cp ZL, YL  ;compare where Z points (current address) to Y (end of string), we only need Low byte since start and end are definitely far enough away to cause roll over errors
+brne print_zy_top_loop ;if not at end keep loading LCD buffer
+
+rcall LCDWrite ;once done write to LCD
+pop YH
+pop YL
+pop ZH
+pop ZL
+pop XH
+pop XL 
+pop mpr
+ret
+
+;***********************************************************
+;*	Func: print_zy_bottom
+;*	desc: stores string stored in program memory and writes it to the top line of the LCD screen
+;*	REMEMBER: the address stored in z and in y must be initially bit shifted by 1 due to least sig bit being low or high indicator. 
+;*	WARNING - assumes Z stores the address of the beginning of the string and Y stores the end of the string to print.
+;***********************************************************
+print_zy_bottom:
+push mpr
+push XL
+push XH
+push ZL
+push ZH
+push YL
+push YH
+
+ldi XL, LOW(lcd_buffer_addr+16) ;point x to the bottom line of the LCD buffer address in data memory
+ldi XH, HIGH(lcd_buffer_addr+16)
+
+print_zy_bottom_loop:
+lpm mpr, Z+ ;load value stored at the address to the beginning of the string (stored in X) to mpr, then inc X to point to next char. ie. first character of string is loaded into mpr
+st X+, mpr ;Store that character to the beginning of the LCD buffer, then increment to next spot in LCD buffer
+
+cp ZL, YL ;compare where Z points (current address) to Y (end of string), we only need Low byte since start and end are definitely far enough away to cause roll over errors
+brne print_zy_bottom_loop ;if not at end keep loading LCD buffer
+
+rcall LCDWrite ;once done write to LCD 
+
+pop YH
+pop YL
+pop ZH
+pop ZL
+pop XH
+pop XL 
+pop mpr
+ret
 
 ;***********************************************************
 ;*	Stored Program Data
@@ -81,16 +158,52 @@ MAIN:
 ; An example of storing a string. Note the labels before and
 ; after the .DB directive; these can help to access the data
 ;-----------------------------------------------------------
-STRING_START:
-    .DB		"Rock"		; Declaring data in ProgMem
-	.DB		"Paper"
-	.DB		"Scissors"
-	.DB		"Win!"
-	.DB		"Lose"
-STRING_END:
+str_rock:
+    .DB		"Rock"		
+str_rock_end:
+
+str_paper:
+.db "paper"
+str_paper_end:
+
+str_scissors:
+.db "scissors"
+str_scissors_end:
+
+str_lose:
+.db "You Lose"
+str_lose_end:
+
+str_win:
+.db "You Win!"
+str_win_end:
+
+str_welcome1:
+.db "welcome"
+str_welcome1_end:
+
+str_welcome2:
+.db "Please Press PD7"
+str_welcome2_end:
+
+str_start1:
+.db "Ready, Waiting"
+str_start1_end:
+
+str_start2:
+.db "for the opponent"
+str_start2_end:
+
+str_game:
+.db "Game Start"
+str_game_end:
+
+
+
 
 ;***********************************************************
 ;*	Additional Program Includes
 ;***********************************************************
 .include "LCDDriver.asm"		; Include the LCD Driver
+
 
