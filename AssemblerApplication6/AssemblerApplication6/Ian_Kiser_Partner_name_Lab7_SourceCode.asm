@@ -19,9 +19,9 @@
 ;***********************************************************
 ;*  Internal Register Definitions and Constants
 ;***********************************************************
-.def    mpr = r16               ; Multi-Purpose Register		
+.def    mpr = r16
+.def		timer_count = r17           ; Multi-Purpose Register		
 ;r20-r22 reserved
-
 
 ; Use this signal code between two boards for their game ready
 .equ    SendReady = 0b11111111
@@ -37,6 +37,13 @@
 .org    $0000                   ; Beginning of IVs
 	    rjmp    INIT            	; Reset interrupt
 
+.org		$0002 ;int 0, will be tied to PD4
+		;select choice left
+		reti
+
+.org		$0004 ;int 1, might be tied to PD5, for extra credit
+		;select choice right
+		reti
 
 .org    $0056                   ; End of Interrupt Vectors
 
@@ -50,9 +57,13 @@ INIT:
 	ldi mpr, high(RAMEND);retrieve ramend high from program memory
 	out SPH, mpr ;load ramend high into stack pointer low via mpr
 	
+
+
 	;I/O Ports
 	;port D -> input for button presses, 
-	;port B -> output for LED countdown/timer counter
+	;port B -> PORTB[4:7] output for LED countdown/timer counter, PB[0:2] used by LCD driver
+	ldi mpr, $FF
+	out DDRB, mpr; set PORTB for output 
 
 
 
@@ -61,14 +72,27 @@ INIT:
 		;Enable receiver and transmitter
 		;Set frame format: 8 data bits, 2 stop bits
 
+
+
 	;TIMER/COUNTER1
 	;Set Normal mode
+	;No need for external pin interrupts -> all OC bits set low, Normal mode -> WGM bits low as well
+	;TCCR1A gets 0b00000000, This is initial value by default, no need to load
+	;no ICN stabilization, normal mode, and 1/256 prescaling -> TOV flag set about every 1.5 seconds when TCNT initially gets 48E4
+	;TCCR1B gets 0b00000010
+	ldi mpr, 0b00000000
+	sts TCCR1A, mpr
+	ldi mpr, 0b00000100
+	sts TCCR1B, mpr
+
+
+	
 
 	;Other
 	rcall LCDInit
 	rcall LCDBacklightOn 
 	rcall LCDClr
-
+	sei
 
 
 ;***********************************************************
@@ -87,9 +111,11 @@ MAIN:
 ;start LED timer
 ;display game start
 
-;PD4 selects play option
+;enable int 0 (and possibly int 1 if extra credit) in interrupt mask
+;PD4 selects play option via interrupt
 
 ;timer ends
+;disable int 0 (and possibly int 1 if extra credit) in interrupt mask
 ;display choices
 ;timer start again
 
@@ -101,12 +127,45 @@ MAIN:
 ;restart code
 
 
+
+
+
 end_main:
-		rjmp end_main
+
+
+
+rjmp end_main
 
 ;***********************************************************
 ;*	Functions and Subroutines
 ;***********************************************************
+
+;***********************************************************
+;*	Func: timer_1_5
+;*	desc: polls timer counter 1 for a 1.5 second timer
+;***********************************************************
+timer_1_5:
+;push stuff to stack
+push mpr
+
+
+
+ldi mpr, $48
+sts TCNT1H, mpr
+ldi mpr, $E4
+sts TCNT1L, mpr
+
+timer_1_5_NoFlag:
+sbis TIFR1, 0 ;skip loop if TOV1 is set
+rjmp timer_1_5_NoFlag
+
+sbi TIFR1, 0 ;reset TOV1
+
+;pop stuff from stack
+
+pop mpr
+ret
+;end timer_1_5
 
 
 ;***********************************************************
@@ -187,8 +246,6 @@ pop XL
 pop mpr
 ret
 ;end print_zy_bottom
-
-
 
 
 ;***********************************************************
