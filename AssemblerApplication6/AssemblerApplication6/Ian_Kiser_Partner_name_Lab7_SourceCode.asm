@@ -20,6 +20,8 @@
 ;*  Internal Register Definitions and Constants
 ;***********************************************************
 .def    mpr = r16    ; Multi-Purpose Register		
+.def	choice_left = r17
+.def	choice_right = r18 ;makes sense to store choice values seperately from LCD because it will be easier to send between boards and interract with LCD
 ;r20-r22 reserved
 
 ; Use this signal code between two boards for their game ready
@@ -92,7 +94,10 @@ INIT:
 	rcall LCDInit
 	rcall LCDBacklightOn 
 	rcall LCDClr
-	sei
+	ldi choice_left, 0
+	ldi choice_right, 0
+
+
 
 
 ;***********************************************************
@@ -130,13 +135,109 @@ MAIN:
 
 
 
-end_main:
 
-rjmp end_main
+
+rjmp MAIN
 
 ;***********************************************************
 ;*	Functions and Subroutines
 ;***********************************************************
+
+
+;***********************************************************
+;*	Func: select_choice_left
+;*	desc: cycles through choices for rock paper scissors and prints them to the LCD on the left hand side, preserves right hand side of LCD
+;***********************************************************
+select_choice_left:
+push mpr
+push choice_right
+;changes made to choice left will be saved globally
+
+;valid choice values include 1,2,3, for rock paper and scissors respectively. 0 will be initialization value so when button is first pressed rock is shown 
+;check if choice left is 10, load with 00 if so
+;otherwise increment choice left
+
+cpi choice_left, 3
+breq select_choice_left_rollover ;if at two do not increment
+
+inc choice_left
+
+rjmp select_choice_left_chosen ;do not roll over if unneeded 
+
+select_choice_left_rollover:
+ldi choice_left, 1
+
+select_choice_left_chosen:
+;load z and y with labels for str clear
+;call zy print function to write spaces to left hand side of LCD without clearing right hand side
+;based on choice left value load Z and Y with appropriate labels for word
+;call zy print function
+
+ldi ZL, low(str_clear<<1)
+ldi ZH, high(str_clear<<1)
+
+ldi YL, low(str_clear_end<<1)
+ldi YH, high(str_clear_end<<1)
+
+rcall print_zy_bottom ;write clear string to left side of LCD
+rcall load_choice_left ;load Z and Y registers with correct string lables
+rcall print_zy_bottom ;print correct choice of string to LCD
+
+
+
+
+pop choice_right
+pop mpr
+ret
+;end select_choice_left
+
+
+;***********************************************************
+;*	Func: load_choice_left
+;*	desc: loads correct string into Z and Y registers depending on choice left value
+;***********************************************************
+load_choice_left:
+push mpr
+
+cpi choice_left, 1
+breq load_choice_left_rock
+
+cpi choice_left, 2
+breq load_choice_left_paper		;find choice_left value
+
+cpi choice_left, 3
+breq load_choice_left_scissors
+
+
+load_choice_left_rock:
+ldi ZL, low(str_rock<<1)
+ldi ZH, high(str_rock<<1)
+
+ldi YL, low(str_rock_end<<1)
+ldi YH, high(str_rock_end<<1)
+
+rjmp load_choice_left_end
+
+load_choice_left_paper:				;load correct string beginning into Z, and end into Y
+ldi ZL, low(str_paper<<1)
+ldi ZH, high(str_paper<<1)
+
+ldi YL, low(str_paper_end<<1)
+ldi YH, high(str_paper_end<<1)
+
+rjmp load_choice_left_end
+
+load_choice_left_scissors:
+ldi ZL, low(str_scissors<<1)
+ldi ZH, high(str_scissors<<1)
+
+ldi YL, low(str_scissors_end<<1)
+ldi YH, high(str_scissors_end<<1)
+
+load_choice_left_end:
+pop mpr
+ret
+
 
 
 
@@ -195,7 +296,7 @@ ret
 ;***********************************************************
 ;*	Func: print_zy_top
 ;*	desc: stores string stored in program memory and writes it to the top line of the LCD screen
-;*	REMEMBER: the address stored in z and in y must be initially bit shifted by 1 due to least sig bit being low or high indicator. 
+;*	REMEMBER: the address stored in z and in y must be initially bit shifted by 1 due to least sig bit being low or high indicator.
 ;*	WARNING - assumes Z stores the address of the beginning of the string and Y stores the end of the string to print.
 ;***********************************************************
 print_zy_top:
@@ -207,7 +308,7 @@ push ZH
 push YL
 push YH
 
-rcall	LCDClrLn1 ;clear line to be writen to
+
 ldi XL, LOW(lcd_buffer_addr) ;point X to the top line of the LCD buffer address in data memory
 ldi XH, HIGH(lcd_buffer_addr)
 
@@ -235,9 +336,10 @@ ret
 
 ;***********************************************************
 ;*	Func: print_zy_bottom
-;*	desc: stores string stored in program memory and writes it to the top line of the LCD screen
+;*	desc: stores string stored in program memory and writes it to the bottom line of the LCD screen on the left
 ;*	REMEMBER: the address stored in z and in y must be initially bit shifted by 1 due to least sig bit being low or high indicator. 
-;*	WARNING - assumes Z stores the address of the beginning of the string and Y stores the end of the string to print.
+;*	REMEMBER: you must clear line outside of this function to prevent overwriting
+;*	WARNING: assumes Z stores the address of the beginning of the string and Y stores the end of the string to print.
 ;***********************************************************
 print_zy_bottom:
 push mpr
@@ -248,16 +350,16 @@ push ZH
 push YL
 push YH
 
-rcall	LCDClrLn2 ;clear line to be writen to
+
 ldi XL, LOW(lcd_buffer_addr+16) ;point x to the bottom line of the LCD buffer address in data memory
 ldi XH, HIGH(lcd_buffer_addr+16)
 
-print_zy_bottom_loop:
+print_zy_bottom_left_loop:
 lpm mpr, Z+ ;load value stored at the address to the beginning of the string (stored in X) to mpr, then inc X to point to next char. ie. first character of string is loaded into mpr
 st X+, mpr ;Store that character to the beginning of the LCD buffer, then increment to next spot in LCD buffer
 
-cp ZL, YL ;compare where Z points (current address) to Y (end of string), we only need Low byte since start and end are definitely far enough away to cause roll over errors
-brne print_zy_bottom_loop ;if not at end keep loading LCD buffer
+cp ZL, YL ;compare where Z points (current address) to Y (end of string), we only need Low byte since start and end are definitely not far enough away to cause roll over errors
+brne print_zy_bottom_left_loop ;if not at end keep loading LCD buffer
 
 rcall	LCDWrLn2 ;once done write to LCD 
 
@@ -269,7 +371,63 @@ pop XH
 pop XL 
 pop mpr
 ret
-;end print_zy_bottom
+;end print_zy_bottom_left
+
+;***********************************************************
+;*	Func: print_yz_bottom
+;*	desc: stores string stored in program memory and writes it to the bottom line of the LCD screen on the right
+;*	REMEMBER: the address stored in z and in y must be initially bit shifted by 1 due to least sig bit being low or high indicator. 
+;*	REMEMBER: you must clear line outside of this function to prevent overwriting
+;*	WARNING: assumes Z stores the address of the beginning of the string and Y stores the end of the string to print.
+;***********************************************************
+print_yz_bottom:
+push mpr
+push XL
+push XH
+push ZL
+push ZH
+push YL
+push YH
+
+;must call lpm on Z, and need to call at end adress so shift Z->Y, and Y->Z for sake of function
+mov XL, ZL
+mov XH, ZH ;X now temporarily holds old Z
+
+mov ZL, YL
+mov ZH, YH ;Z now holds old Y 
+
+mov YL, XL
+mov YH, XH ;Y now holds old Z via X
+
+ldi XL, LOW(lcd_buffer_addr+32) ;point x to the bottom line of the LCD buffer address in data memory
+ldi XH, HIGH(lcd_buffer_addr+32)
+
+print_yz_bottom_loop:
+lpm mpr, Z ;load value stored at the address to the beginning of the string (stored in X) to mpr, then inc X to point to next char. ie. first character of string is loaded into mpr
+st X, mpr ;Store that character to the beginning of the LCD buffer, then increment to next spot in LCD buffer
+
+sbiw ZH:ZL, 1
+sbiw XH:XL, 1
+
+
+cp ZL, YL ;compare where Z points (beginning of string) to Y (Current address), we only need Low byte since start and end are definitely not far enough away to cause roll over errors
+brne print_yz_bottom_loop ;if not at end keep loading LCD buffer
+
+lpm mpr, Z; store last character (dec YL inside loop triggers reset interrupt for some reason)
+st X, mpr
+
+rcall	LCDWrLn2 ;once done write to LCD 
+
+pop YH
+pop YL
+pop ZH
+pop ZL
+pop XH
+pop XL 
+pop mpr
+ret
+;end print_yz_bottom
+
 
 
 ;***********************************************************
@@ -280,8 +438,13 @@ ret
 ; An example of storing a string. Note the labels before and
 ; after the .DB directive; these can help to access the data
 ;-----------------------------------------------------------
+
+str_clear:
+.db "        "
+str_clear_end:
+
 str_rock:
-    .DB		"Rock"		
+.db	"Rock"		
 str_rock_end:
 
 str_paper:
