@@ -23,44 +23,45 @@
   <FILE>Lab 7.lss</FILE>
  </OUTPUT_FILES>
  <LABELS>
-  <INIT><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>53</LINE></INIT>
+  <INIT><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>52</LINE></INIT>
   <LCDInit><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>71</LINE></LCDInit>
   <LCDBacklightOn><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>123</LINE></LCDBacklightOn>
   <LCDClr><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>188</LINE></LCDClr>
-  <MAIN><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>101</LINE></MAIN>
-  <end_main><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>133</LINE></end_main>
-  <timer_1_5><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>154</LINE></timer_1_5>
-  <timer_1_5_NoFlag><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>165</LINE></timer_1_5_NoFlag>
-  <print_zy_top><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>184</LINE></print_zy_top>
+  <MAIN><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>100</LINE></MAIN>
+  <end_main><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>132</LINE></end_main>
+  <timer_1_5><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>173</LINE></timer_1_5>
+  <led_countdown><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>149</LINE></led_countdown>
+  <timer_1_5_NoFlag><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>184</LINE></timer_1_5_NoFlag>
+  <print_zy_top><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>203</LINE></print_zy_top>
   <LCDClrLn1><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>253</LINE></LCDClrLn1>
-  <print_zy_top_loop><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>197</LINE></print_zy_top_loop>
+  <print_zy_top_loop><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>216</LINE></print_zy_top_loop>
   <LCDWrLn1><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>150</LINE></LCDWrLn1>
-  <print_zy_bottom><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>225</LINE></print_zy_bottom>
+  <print_zy_bottom><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>244</LINE></print_zy_bottom>
   <LCDClrLn2><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>266</LINE></LCDClrLn2>
-  <print_zy_bottom_loop><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>238</LINE></print_zy_bottom_loop>
+  <print_zy_bottom_loop><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>257</LINE></print_zy_bottom_loop>
   <LCDWrLn2><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>169</LINE></LCDWrLn2>
-  <str_rock><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>266</LINE></str_rock>
-  <str_rock_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>268</LINE></str_rock_end>
-  <str_paper><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>270</LINE></str_paper>
-  <str_paper_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>272</LINE></str_paper_end>
-  <str_scissors><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>274</LINE></str_scissors>
-  <str_scissors_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>276</LINE></str_scissors_end>
-  <str_lose><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>278</LINE></str_lose>
-  <str_lose_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>280</LINE></str_lose_end>
-  <str_win><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>282</LINE></str_win>
-  <str_win_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>284</LINE></str_win_end>
-  <str_draw><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>286</LINE></str_draw>
-  <str_draw_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>288</LINE></str_draw_end>
-  <str_welcome1><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>290</LINE></str_welcome1>
-  <str_welcome1_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>292</LINE></str_welcome1_end>
-  <str_welcome2><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>294</LINE></str_welcome2>
-  <str_welcome2_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>296</LINE></str_welcome2_end>
-  <str_start1><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>298</LINE></str_start1>
-  <str_start1_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>300</LINE></str_start1_end>
-  <str_start2><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>302</LINE></str_start2>
-  <str_start2_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>304</LINE></str_start2_end>
-  <str_game><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>306</LINE></str_game>
-  <str_game_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>308</LINE></str_game_end>
+  <str_rock><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>285</LINE></str_rock>
+  <str_rock_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>287</LINE></str_rock_end>
+  <str_paper><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>289</LINE></str_paper>
+  <str_paper_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>291</LINE></str_paper_end>
+  <str_scissors><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>293</LINE></str_scissors>
+  <str_scissors_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>295</LINE></str_scissors_end>
+  <str_lose><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>297</LINE></str_lose>
+  <str_lose_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>299</LINE></str_lose_end>
+  <str_win><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>301</LINE></str_win>
+  <str_win_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>303</LINE></str_win_end>
+  <str_draw><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>305</LINE></str_draw>
+  <str_draw_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>307</LINE></str_draw_end>
+  <str_welcome1><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>309</LINE></str_welcome1>
+  <str_welcome1_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>311</LINE></str_welcome1_end>
+  <str_welcome2><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>313</LINE></str_welcome2>
+  <str_welcome2_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>315</LINE></str_welcome2_end>
+  <str_start1><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>317</LINE></str_start1>
+  <str_start1_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>319</LINE></str_start1_end>
+  <str_start2><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>321</LINE></str_start2>
+  <str_start2_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>323</LINE></str_start2_end>
+  <str_game><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>325</LINE></str_game>
+  <str_game_end><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm</FILE><LINE>327</LINE></str_game_end>
   <LCDDelay><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>502</LINE></LCDDelay>
   <LCD_Internal_WriteCMD><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>486</LINE></LCD_Internal_WriteCMD>
   <LCDBacklightOff><FILE>C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm</FILE><LINE>131</LINE></LCDBacklightOff>

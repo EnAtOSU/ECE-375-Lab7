@@ -19,8 +19,7 @@
 ;***********************************************************
 ;*  Internal Register Definitions and Constants
 ;***********************************************************
-.def    mpr = r16
-.def		timer_count = r17           ; Multi-Purpose Register		
+.def    mpr = r16    ; Multi-Purpose Register		
 ;r20-r22 reserved
 
 ; Use this signal code between two boards for their game ready
@@ -132,13 +131,37 @@ MAIN:
 
 end_main:
 
-
-
 rjmp end_main
 
 ;***********************************************************
 ;*	Functions and Subroutines
 ;***********************************************************
+
+
+
+;***********************************************************
+;*	Func: led_countdown
+;*	desc: counts down 6 seconds and displays on led's
+;***********************************************************
+led_countdown:
+push mpr
+
+in mpr, PORTB
+ori mpr, 0b11110000
+out PORTB, mpr ;all led's are now set
+
+rcall timer_1_5 ;wait
+cbi PORTB, 4 ;clear bit 4
+rcall timer_1_5 ;repeat for other bits
+cbi PORTB, 5
+rcall timer_1_5
+cbi PORTB, 6
+rcall timer_1_5
+cbi PORTB, 7
+
+pop mpr
+ret
+;end led_countdown
 
 ;***********************************************************
 ;*	Func: timer_1_5
