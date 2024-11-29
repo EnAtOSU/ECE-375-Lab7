@@ -67,9 +67,10 @@ INIT:
 
 
 	;USART1
-		;Set baudrate at 2400bps -> I believe system clock is 1MHz, therefore UBRR gets 25 by table 18-4 in data sheet
-		;Enable receiver and transmitter
-		;Set frame format: 8 data bits, 2 stop bits
+	;Set baudrate at 2400bps -> I believe system clock is 8MHz, therefore UBRR gets either 207 or 416 depending on U2Xn by table 18-4 in data sheet
+	;Enable receiver and transmitter
+	;Set frame format: 8 data bits, 2 stop bits
+
 
 
 
