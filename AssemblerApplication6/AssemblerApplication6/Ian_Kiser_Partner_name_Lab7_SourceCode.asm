@@ -192,6 +192,13 @@ ret
 ;end select_choice_left
 
 
+
+
+
+
+
+
+
 ;***********************************************************
 ;*	Func: load_choice_left
 ;*	desc: loads correct string into Z and Y registers depending on choice left value
@@ -241,6 +248,10 @@ ret
 
 
 
+
+
+
+
 ;***********************************************************
 ;*	Func: led_countdown
 ;*	desc: counts down 6 seconds and displays on led's
@@ -264,6 +275,17 @@ cbi PORTB, 7
 pop mpr
 ret
 ;end led_countdown
+
+
+
+
+
+
+
+
+
+
+
 
 ;***********************************************************
 ;*	Func: timer_1_5
@@ -291,6 +313,12 @@ sbi TIFR1, 0 ;reset TOV1
 pop mpr
 ret
 ;end timer_1_5
+
+
+
+
+
+
 
 
 ;***********************************************************
@@ -334,6 +362,15 @@ ret
 
 
 
+
+
+
+
+
+
+
+
+
 ;***********************************************************
 ;*	Func: print_zy_bottom
 ;*	desc: stores string stored in program memory and writes it to the bottom line of the LCD screen on the left
@@ -372,6 +409,16 @@ pop XL
 pop mpr
 ret
 ;end print_zy_bottom_left
+
+
+
+
+
+
+
+
+
+
 
 ;***********************************************************
 ;*	Func: print_yz_bottom
@@ -427,6 +474,15 @@ pop XL
 pop mpr
 ret
 ;end print_yz_bottom
+
+
+
+
+
+
+
+
+
 
 
 
