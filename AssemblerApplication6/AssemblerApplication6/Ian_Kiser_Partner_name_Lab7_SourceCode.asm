@@ -62,6 +62,11 @@ INIT:
 
 	;I/O Ports
 	;port D -> input for button presses, 
+	ldi mpr, 0
+	out DDRD, mpr ;set portD for input
+	ldi mpr, $FF
+	out PORTD, mpr ;set pull up resistors
+
 	;port B -> PORTB[4:7] output for LED countdown/timer counter, PB[0:2] used by LCD driver
 	ldi mpr, $FF
 	out DDRB, mpr; set PORTB for output 
@@ -132,18 +137,63 @@ MAIN:
 ;restart code
 
 
-
-rcall timer_1_5
-rcall select_choice_left
-rcall select_choice_right
+main_loop:
 
 
 
-rjmp MAIN
+rjmp main_loop
 
 ;***********************************************************
 ;*	Functions and Subroutines
 ;***********************************************************
+
+
+
+
+
+;***********************************************************
+;*	Func: welcome
+;*	desc: display welcome screen and poll for PD7
+;***********************************************************
+welcome:
+push mpr
+
+
+ldi ZL, low(str_welcome1<<1)
+ldi ZH, high(str_welcome1<<1)
+
+ldi YL, low(str_welcome1_end<<1)
+ldi YH, high(str_welcome1_end<<1)
+
+rcall print_zy_top
+
+ldi ZL, low(str_welcome2<<1)
+ldi ZH, high(str_welcome2<<1)
+
+ldi YL, low(str_welcome2_end<<1)
+ldi YH, high(str_welcome2_end<<1)
+
+rcall print_zy_bottom
+
+
+welcome_not_pressed:
+sbic PIND, PD7
+rjmp welcome_not_pressed
+;PD7 is now pressed
+nop
+nop ;avoid some debouncing
+welcome_pressed:
+sbis PIND, PD7
+rjmp welcome_pressed
+;PD7 is now released
+rcall LCDClr
+
+
+pop mpr
+ret
+
+
+
 
 
 ;***********************************************************
