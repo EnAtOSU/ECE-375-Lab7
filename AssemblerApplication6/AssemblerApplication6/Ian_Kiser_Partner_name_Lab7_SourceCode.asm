@@ -133,7 +133,9 @@ MAIN:
 
 
 
-
+rcall timer_1_5
+rcall select_choice_left
+rcall select_choice_right
 
 
 
@@ -194,6 +196,53 @@ ret
 
 
 
+;***********************************************************
+;*	Func: select_choice_right
+;*	desc: cycles through choices for rock paper scissors and prints them to the LCD on the left hand side, preserves right hand side of LCD
+;***********************************************************
+select_choice_right:
+push mpr
+
+;changes made to choice left will be saved globally
+
+;valid choice values include 1,2,3, for rock paper and scissors respectively. 0 will be initialization value so when button is first pressed rock is shown 
+;check if choice left is 10, load with 00 if so
+;otherwise increment choice left
+
+cpi choice_right, 3
+breq select_choice_right_rollover ;if at two do not increment
+
+inc choice_right
+
+rjmp select_choice_right_chosen ;do not roll over if unneeded 
+
+select_choice_right_rollover:
+ldi choice_right, 1
+
+select_choice_right_chosen:
+;load z and y with labels for str clear
+;call zy print function to write spaces to left hand side of LCD without clearing right hand side
+;based on choice left value load Z and Y with appropriate labels for word
+;call zy print function
+
+ldi ZL, low(str_clear<<1)
+ldi ZH, high(str_clear<<1)
+
+ldi YL, low(str_clear_end<<1)
+ldi YH, high(str_clear_end<<1)
+
+rcall print_yz_bottom ;write clear string to left side of LCD
+rcall load_choice_right ;load Z and Y registers with correct string lables
+rcall print_yz_bottom ;print correct choice of string to LCD
+
+
+
+pop mpr
+ret
+;end select_choice_right
+
+
+
 
 
 
@@ -244,12 +293,56 @@ ldi YH, high(str_scissors_end<<1)
 load_choice_left_end:
 pop mpr
 ret
+;end load_choice_left
 
 
+;***********************************************************
+;*	Func: load_choice_right
+;*	desc: loads correct string into Z and Y registers depending on choice right value
+;***********************************************************
+load_choice_right:
+push mpr
+
+cpi choice_right, 1
+breq load_choice_right_rock
+
+cpi choice_right, 2
+breq load_choice_right_paper		;find choice_left value
+
+cpi choice_right, 3
+breq load_choice_right_scissors
 
 
+load_choice_right_rock:
+ldi ZL, low(str_rock<<1)
+ldi ZH, high(str_rock<<1)
 
+ldi YL, low(str_rock_end<<1)
+ldi YH, high(str_rock_end<<1)
 
+rjmp load_choice_right_end
+
+load_choice_right_paper:				;load correct string beginning into Z, and end into Y
+ldi ZL, low(str_paper<<1)
+ldi ZH, high(str_paper<<1)
+
+ldi YL, low(str_paper_end<<1)
+ldi YH, high(str_paper_end<<1)
+
+rjmp load_choice_right_end
+
+load_choice_right_scissors:
+ldi ZL, low(str_scissors<<1)
+ldi ZH, high(str_scissors<<1)
+
+ldi YL, low(str_scissors_end<<1)
+ldi YH, high(str_scissors_end<<1)
+
+load_choice_right_end:
+pop mpr
+ret
+
+;end load_choice_right
 
 
 ;***********************************************************
@@ -508,7 +601,7 @@ str_paper:
 str_paper_end:
 
 str_scissors:
-.db "scissors"
+.db "scissor "
 str_scissors_end:
 
 str_lose:
