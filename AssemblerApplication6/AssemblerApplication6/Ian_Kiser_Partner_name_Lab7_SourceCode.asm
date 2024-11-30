@@ -500,7 +500,7 @@ pop XH
 pop XL 
 pop mpr
 ret
-;end print_zy_bottom
+;end print_zy_top
 
 
 
@@ -551,7 +551,7 @@ pop XH
 pop XL 
 pop mpr
 ret
-;end print_zy_bottom_left
+;end print_zy_bottom
 
 
 
