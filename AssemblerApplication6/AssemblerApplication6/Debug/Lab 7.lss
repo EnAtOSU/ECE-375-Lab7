@@ -1,13 +1,13 @@
 
-AVRASM ver. 2.2.8  C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm Fri Nov 29 15:40:14 2024
+AVRASM ver. 2.2.8  C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm Sat Nov 30 10:00:41 2024
 
 [builtin](2): Including file 'C:/microchip studio\7.0\Packs\Atmel\ATmega_DFP\2.2.509\avrasm\inc\m32U4def.inc'
 C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm(17): Including file 'C:/microchip studio\7.0\Packs\Atmel\ATmega_DFP\2.2.509\avrasm\inc\m32U4def.inc'
-C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm(695): Including file 'C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm'
+C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm(722): Including file 'C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm'
 C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm(31): Including file 'C:/microchip studio\7.0\Packs\Atmel\ATmega_DFP\2.2.509\avrasm\inc\m32U4def.inc'
 [builtin](2): Including file 'C:/microchip studio\7.0\Packs\Atmel\ATmega_DFP\2.2.509\avrasm\inc\m32U4def.inc'
 C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm(17): Including file 'C:/microchip studio\7.0\Packs\Atmel\ATmega_DFP\2.2.509\avrasm\inc\m32U4def.inc'
-C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm(695): Including file 'C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm'
+C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm(722): Including file 'C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm'
 C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplication6\LCDDriver.asm(31): Including file 'C:/microchip studio\7.0\Packs\Atmel\ATmega_DFP\2.2.509\avrasm\inc\m32U4def.inc'
                                  
                                  
@@ -1525,7 +1525,24 @@ C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplic
                                  	;Set baudrate at 2400bps -> I believe system clock is 8MHz, therefore UBRR gets either 207 or 416 depending on U2Xn by table 18-4 in data sheet
                                  	;Enable receiver and transmitter
                                  	;Set frame format: 8 data bits, 2 stop bits
+                                 	;do not use SBI and CBI, and sbis sbic because of fifo 
                                  
+                                 	;UCSR1A: bit 7 RXC1(recieve complete) -> 0, bit 6 TXC1 (transmit complete) -> 0, bit 5 UDRE1 (data reg empty) -> 1, error bits[4:2] -> 0
+                                 	; bit 1 U2X1 (double transmit speed) -> 0 for normal speed, bit 0 MPCM1 (multi processor communication) -> 0 (do not want to send address info)
+                                 
+                                 	;UCSR1B: bit 7 RXCIE1 (RX complete interrupt enable) -> set for interrupt, bit 6 TXCIE1 (TX interrupt) -> set for interrupt, bit 5 UDRIE1 (interrupt for UDRE1 flag) -> set for interrupt
+                                 	;bit 4 RXEN1 (reciever enable) -> 1, bit 3 TXEN1 (transmit enable) -> 1, bit 2 UCSZ12 (character size) -> 0 for 8 bit characters, bits[1:0] RX/TX 81 (recieve and transmit data bit 8) -> 0 I think since frams will be 8 bit  
+                                 	
+                                 	;UCSR1C: bits [7:6] UMSEL1 1/0 (usart mode select) -> 00 for asychronous, UPM1 1/0 (parit mode) -> 00 for disabled, bit 3 USBS1 (stop bit select) -> 1 for 2 bit, bits [2:1] UCSZ1 [1:0] (character size) -> 11 for 8 bit,
+                                 	; bit 0 UCPOL1 (clock polarity) -> 0 for falling edge
+                                 
+                                 	;UCSR1D: might need to set bits 1:0 but probably not, they control something called transmission and reception flow control
+                                 
+                                 	;UCSR1A gets 0b00100000
+                                 	;UCSR1B gets 0bxxx11000
+                                 	;UCSR1C gets 0b00001110
+                                 
+                                 	
                                  
                                  
                                  
@@ -1562,20 +1579,30 @@ C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplic
                                  ;loop until PD7 pressed
                                  
                                  ;PD7 pressed
-                                 ;ready transmit
+                                 ;begin continuously transmitting ready signal
+                                 ;enable recieve interrupt 
                                  ;display ready and waiting screen
                                  
                                  ;ready recieved
-                                 ;start LED timer
+                                 ;stop transmitting ready signal
+                                 ;check if we have stopped recieving ready signal -> other board has recieved our ready -> both ready
+                                 
                                  ;display game start
+                                 ;wait 1.5 seconds
+                                 ;start LED timer
                                  
                                  ;enable int 0 (and possibly int 1 if extra credit) in interrupt mask
                                  ;PD4 selects play option via interrupt
                                  
                                  ;timer ends
                                  ;disable int 0 (and possibly int 1 if extra credit) in interrupt mask
+                                 ;begin continously transmitting choice(s), and stop when opponants choice recieved
+                                 ;repeat for second choice if doing extra credit
+                                 
                                  ;display choices
                                  ;timer start again
+                                 
+                                 ;if doing extra credit have shoot interface
                                  
                                  ;timer ends
                                  ;display win/lose screen
@@ -1948,7 +1975,7 @@ C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplic
 0000fb 91af                      pop XL 
 0000fc 910f                      pop mpr
 0000fd 9508                      ret
-                                 ;end print_zy_bottom
+                                 ;end print_zy_top
                                  
                                  
                                  
@@ -1999,7 +2026,7 @@ C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\AssemblerApplication6\AssemblerApplic
 000111 91af                      pop XL 
 000112 910f                      pop mpr
 000113 9508                      ret
-                                 ;end print_zy_bottom_left
+                                 ;end print_zy_bottom
                                  
                                  
                                  
