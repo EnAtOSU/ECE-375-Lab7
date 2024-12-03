@@ -183,13 +183,16 @@ main_loop:
 ;call welcome
 rcall welcome
 
+
 ;transmit ready
 rcall TransmitReady
+
 ;check if recieve flag is set
 ;loop if not
 rcall check_recieve
-;continue
 rcall LCDClr
+;continue
+
 
 ldi ZL, low(str_paper<<1)
 ldi ZH, high(str_paper<<1)
@@ -218,6 +221,13 @@ TransmitReady:
 push mpr
 ldi mpr, SendReady
 sts UDR1, mpr 
+
+TransmitReady_not_complete:
+lds mpr, UCSR1A
+andi mpr, 0b01000000
+cpi mpr, 0b01000000
+brne TransmitReady_not_complete
+
 pop mpr
 ret
 
