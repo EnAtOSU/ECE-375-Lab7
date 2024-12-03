@@ -184,12 +184,20 @@ main_loop:
 rcall welcome
 
 ;transmit ready
-
+rcall TransmitReady
 ;check if recieve flag is set
 ;loop if not
 rcall check_recieve
 ;continue
+rcall LCDClr
 
+ldi ZL, low(str_paper<<1)
+ldi ZH, high(str_paper<<1)
+
+ldi YL, low(str_paper_end<<1)
+ldi YH, high(str_paper_end<<1)
+
+rcall print_zy_top
 
 
 
@@ -202,6 +210,16 @@ rjmp main_loop
 ;*	Functions and Subroutines
 ;***********************************************************
 
+;***********************************************************
+;*	Func: TransmitReady
+;*	desc: transmit the ready signal
+;***********************************************************
+TransmitReady: 
+push mpr
+ldi mpr, SendReady
+sts UDR1, mpr 
+pop mpr
+ret
 
 ;***********************************************************
 ;*	Func: check_recieve
