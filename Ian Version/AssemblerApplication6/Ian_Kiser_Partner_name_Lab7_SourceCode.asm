@@ -46,6 +46,8 @@
 		;select choice right
 		reti
 
+;.org read interrupt vector on usart 1
+
 .org    $0056                   ; End of Interrupt Vectors
 
 ;***********************************************************
@@ -91,11 +93,22 @@ INIT:
 	;UCSR1D: might need to set bits 1:0 but probably not, they control something called transmission and reception flow control
 
 	;UCSR1A gets 0b00100000
-	;UCSR1B gets 0bxxx11000
+	;UCSR1B gets 0b10011000 -> enable read interrupt
 	;UCSR1C gets 0b00001110
+	;UBRRH1 gets 0b00000000
+	;UBRRL1 gets $CF -> 207
 
-	
+	ldi mpr, 0b00100000
+	sts UCSR1A, mpr
+	ldi mpr, 0b00011000
+	sts UCSR1B, mpr
+	ldi mpr, 0b00001110
+	sts UCSR1C, mpr
 
+	ldi mpr, 0
+	sts UBRR1H, mpr
+	ldi mpr, $CF
+	sts UBRR1L, mpr
 
 
 	;TIMER/COUNTER1
@@ -166,6 +179,21 @@ MAIN:
 
 main_loop:
 
+;testing
+;call welcome
+rcall welcome
+
+;transmit ready
+
+;check if recieve flag is set
+;loop if not
+rcall check_recieve
+;continue
+
+
+
+
+
 
 
 rjmp main_loop
@@ -175,6 +203,29 @@ rjmp main_loop
 ;***********************************************************
 
 
+;***********************************************************
+;*	Func: check_recieve
+;*	desc: loops until recieve flag is set then checks if recieve is correct value
+;***********************************************************
+check_recieve:
+push mpr
+
+check_recieve_reception:
+lds mpr, UCSR1A
+andi mpr, 0b10000000
+cpi mpr, 0b10000000
+brne check_recieve_reception
+;recieve flag set 
+
+
+check_recieve_not_ready:
+lds mpr, UDR1
+cpi mpr, SendReady
+brne check_recieve_not_ready
+
+
+pop mpr
+ret
 
 
 
@@ -213,7 +264,7 @@ welcome_pressed:
 sbis PIND, PD7
 rjmp welcome_pressed
 ;PD7 is now released
-rcall LCDClr
+
 
 
 pop mpr
