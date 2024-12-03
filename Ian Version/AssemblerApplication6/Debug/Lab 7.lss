@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.8  C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\Ian Version\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm Tue Dec 03 13:33:37 2024
+AVRASM ver. 2.2.8  C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\Ian Version\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm Tue Dec 03 13:39:40 2024
 
 [builtin](2): Including file 'C:/microchip studio\7.0\Packs\Atmel\ATmega_DFP\2.2.509\avrasm\inc\m32U4def.inc'
 C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\Ian Version\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm(17): Including file 'C:/microchip studio\7.0\Packs\Atmel\ATmega_DFP\2.2.509\avrasm\inc\m32U4def.inc'
@@ -1633,29 +1633,29 @@ C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\Ian Version\AssemblerApplication6\LCD
                                  
                                  
                                  ;transmit ready
-00007b d008                      rcall TransmitReady
+00007b d007                      rcall TransmitReady
                                  
                                  ;check if recieve flag is set
                                  ;loop if not
-00007c d012                      rcall check_recieve
-00007d d15d                      rcall LCDClr
+00007c d011                      rcall check_recieve
+                                 
                                  ;continue
                                  
                                  
-00007e ede0                      ldi ZL, low(str_paper<<1)
-00007f e0f2                      ldi ZH, high(str_paper<<1)
+00007d ede0                      ldi ZL, low(str_paper<<1)
+00007e e0f2                      ldi ZH, high(str_paper<<1)
                                  
-000080 edc6                      ldi YL, low(str_paper_end<<1)
-000081 e0d2                      ldi YH, high(str_paper_end<<1)
+00007f edc6                      ldi YL, low(str_paper_end<<1)
+000080 e0d2                      ldi YH, high(str_paper_end<<1)
                                  
-000082 d093                      rcall print_zy_top
-                                 
-                                 
+000081 d094                      rcall print_zy_top
                                  
                                  
                                  
                                  
-000083 cff6                      rjmp main_loop
+                                 
+                                 
+000082 cff7                      rjmp main_loop
                                  
                                  ;***********************************************************
                                  ;*	Functions and Subroutines
@@ -1666,33 +1666,33 @@ C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\Ian Version\AssemblerApplication6\LCD
                                  ;*	desc: transmit the ready signal
                                  ;***********************************************************
                                  TransmitReady: 
-000084 930f                      push mpr
-000085 ef0f                      ldi mpr, SendReady
-000086 9300 00ce                 sts UDR1, mpr 
+000083 930f                      push mpr
+000084 ef0f                      ldi mpr, SendReady
+000085 9300 00ce                 sts UDR1, mpr 
                                  
                                  TransmitReady_not_complete:
-000088 9100 00c8                 lds mpr, UCSR1A
-00008a 7400                      andi mpr, 0b01000000
-00008b 3400                      cpi mpr, 0b01000000
-00008c f7d9                      brne TransmitReady_not_complete
+000087 9100 00c8                 lds mpr, UCSR1A
+000089 7400                      andi mpr, 0b01000000
+00008a 3400                      cpi mpr, 0b01000000
+00008b f7d9                      brne TransmitReady_not_complete
                                  
-00008d 910f                      pop mpr
-00008e 9508                      ret
+00008c 910f                      pop mpr
+00008d 9508                      ret
                                  
                                  ;***********************************************************
                                  ;*	Func: check_recieve
                                  ;*	desc: loops until recieve flag is set then checks if recieve is correct value
                                  ;***********************************************************
                                  check_recieve:
-00008f 930f                      push mpr
+00008e 930f                      push mpr
                                  
                                  check_recieve_reception:
-000090 9100 00c8                 lds mpr, UCSR1A
-000092 7800                      andi mpr, 0b10000000
-000093 3800                      cpi mpr, 0b10000000
-000094 f7d9                      brne check_recieve_reception
+00008f 9100 00c8                 lds mpr, UCSR1A
+000091 7800                      andi mpr, 0b10000000
+000092 3800                      cpi mpr, 0b10000000
+000093 f7d9                      brne check_recieve_reception
                                  ;recieve flag set 
-                                 
+000094 d146                      rcall LCDClr
                                  
                                  check_recieve_not_ready:
 000095 9100 00ce                 lds mpr, UDR1

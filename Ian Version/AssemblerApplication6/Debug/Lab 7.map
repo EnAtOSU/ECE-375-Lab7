@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.8  C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\Ian Version\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm Tue Dec 03 13:33:37 2024
+AVRASM ver. 2.2.8  C:\Users\Ian\Documents\GitHub\ECE-375-Lab7\Ian Version\AssemblerApplication6\Ian_Kiser_Partner_name_Lab7_SourceCode.asm Tue Dec 03 13:39:40 2024
 
 
 EQU  SIGNATURE_000 0000001e
@@ -1009,13 +1009,13 @@ CSEG LCDClr       000001db
 CSEG MAIN         0000007a
 CSEG main_loop    0000007a
 CSEG welcome      0000009b
-CSEG TransmitReady 00000084
-CSEG check_recieve 0000008f
+CSEG TransmitReady 00000083
+CSEG check_recieve 0000008e
 CSEG str_paper    00000168
 CSEG str_paper_end 0000016b
 CSEG print_zy_top 00000116
-CSEG TransmitReady_not_complete 00000088
-CSEG check_recieve_reception 00000090
+CSEG TransmitReady_not_complete 00000087
+CSEG check_recieve_reception 0000008f
 CSEG check_recieve_not_ready 00000095
 CSEG str_welcome1 0000017c
 CSEG str_welcome1_end 00000180

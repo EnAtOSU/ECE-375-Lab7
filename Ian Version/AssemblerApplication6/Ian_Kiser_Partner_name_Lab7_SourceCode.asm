@@ -183,14 +183,15 @@ main_loop:
 ;call welcome
 rcall welcome
 
+;mpr means somethig past here
+transmit_loop:
+;try to read -> set mpr to ready recieved
+;try to transmit
 
-;transmit ready
-rcall TransmitReady
+brne transmit_loop ;loop if mpr is not set 
+;then read to clear URD1 reg
 
-;check if recieve flag is set
-;loop if not
-rcall check_recieve
-rcall LCDClr
+
 ;continue
 
 
@@ -237,20 +238,6 @@ ret
 ;***********************************************************
 check_recieve:
 push mpr
-
-check_recieve_reception:
-lds mpr, UCSR1A
-andi mpr, 0b10000000
-cpi mpr, 0b10000000
-brne check_recieve_reception
-;recieve flag set 
-
-
-check_recieve_not_ready:
-lds mpr, UDR1
-cpi mpr, SendReady
-brne check_recieve_not_ready
-
 
 pop mpr
 ret
