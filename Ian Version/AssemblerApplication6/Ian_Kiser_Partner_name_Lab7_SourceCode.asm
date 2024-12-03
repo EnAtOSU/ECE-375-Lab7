@@ -38,7 +38,7 @@
 .org    $0000                   ; Beginning of IVs
 	    rjmp    INIT            	; Reset interrupt
 
-.org		$0002 ;int 0, will be tied to PD4
+.org		$0002 ;int 0, will be tied to PD4, interrupts will need EIMSK, and EICRA/B registers set correctly
 		;select choice left
 		reti
 
