@@ -186,11 +186,40 @@ rcall welcome
 ;mpr means somethig past here
 transmit_loop:
 ;try to read -> set mpr to ready recieved
-;try to transmit
+lds mpr, UDR1 ;mpr now either holds ready, or is empty
+;wait for UDR1 reg empty flag
+not_recieved:
+lds r19, UCSR1A
+andi r19, 0b00100000 ;only save usart data reg empty flag
+cpi r19, 0b00100000
+brne not_recieved ;if data reg not empty wait for it to be empty
 
+
+;try to transmit -> must not be done on mpr so we can check afterwards
+ldi r19, SendReady
+sts UDR1, r19
+
+
+;again wait for data reg empty flag
+not_sent:
+lds r19, UCSR1A
+andi r19, 0b00100000 ;only save usart data reg empty flag
+cpi r19, 0b00100000
+brne not_sent ;if data reg not empty wait for it to be empty
+
+
+
+
+cpi mpr, SendReady
 brne transmit_loop ;loop if mpr is not set 
 ;then read to clear URD1 reg
+lds mpr, UDR1
 
+not_read:
+lds r19, UCSR1A
+andi r19, 0b00100000 ;only save usart data reg empty flag
+cpi r19, 0b00100000
+brne not_read ;if data reg not empty wait for it to be empty
 
 ;continue
 
