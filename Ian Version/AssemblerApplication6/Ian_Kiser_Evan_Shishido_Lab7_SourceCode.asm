@@ -9,7 +9,7 @@
 ;* 	2. Timer/counter1 Normal mode to create a 1.5-sec delay
 ;***********************************************************
 ;*
-;*	 Author: Ian Kiser, Evan Something
+;*	 Author: Ian Kiser, Evan Shishido
 ;*	   Date: 12/6/2024
 ;*
 ;***********************************************************
