@@ -22,6 +22,7 @@
 .def    mpr = r16    ; Multi-Purpose Register		
 .def	choice_left = r17
 .def	choice_right = r18 ;makes sense to store choice values seperately from LCD because it will be easier to send between boards and interract with LCD
+.def	data = r19
 
 ;r20-r22 reserved
 
@@ -47,6 +48,9 @@
 		;select choice right
 		reti
 
+.org	$0032 ; recieve flag interrupt
+rcall recieve
+reti
 ;.org read interrupt vector on usart 1
 
 .org    $0056                   ; End of Interrupt Vectors
@@ -186,6 +190,7 @@ MAIN:
 
 
 main_loop:
+sei
 
 ;testing
 ;call welcome
@@ -193,30 +198,13 @@ rcall welcome
 
 ;mpr means somethig past here
 transmit_loop:
-;try to read -> set mpr to ready recieved
-lds mpr, UDR1 ;mpr now either holds ready, or is empty
-;wait for UDR1 reg empty flag
-rcall check_UDR1
-
-push mpr ;save recieve value
-;transmit ready -> must not be done on mpr so we can check afterwards
 ldi mpr, SendReady
-sts UDR1, mpr
-pop mpr ;restore recieve value
-
-;again wait for data reg empty flag
-rcall check_UDR1
-
-
-cpi mpr, SendReady
-brne transmit_loop ;loop if mpr is not set to ready
-;then read to clear URD1 reg
-lds mpr, UDR1
-
-rcall check_UDR1 
-;continue
+rcall transmit
+cpi data, SendReady
+brne transmit_loop
 
 rcall LCDClr
+
 
 
 ldi ZL, low(str_paper<<1)
@@ -238,6 +226,30 @@ rjmp main_loop
 ;*	Functions and Subroutines
 ;***********************************************************
 
+
+
+;***********************************************************
+;*	Func: transmit
+;*	desc: transmits mpr to UDR1
+;***********************************************************
+transmit:
+
+sts UDR1, mpr
+rcall check_UDR1
+
+
+ret
+
+;***********************************************************
+;*	Func: recieve
+;*	desc: loads data register with usart reception value
+;***********************************************************
+recieve:
+
+lds data, UDR1
+rcall check_UDR1
+
+ret
 
 ;***********************************************************
 ;*	Func: check_UDR1
