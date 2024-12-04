@@ -142,6 +142,7 @@ INIT:
 	rcall LCDClr
 	ldi choice_left, 0
 	ldi choice_right, 0
+	ldi data, 0
 
 
 
@@ -189,12 +190,13 @@ MAIN:
 ;restart code
 
 
-main_loop:
+
 sei
 
 ;testing
 ;call welcome
 rcall welcome
+
 
 ;mpr means somethig past here
 transmit_loop:
@@ -213,10 +215,10 @@ ldi ZH, high(str_paper<<1)
 ldi YL, low(str_paper_end<<1)
 ldi YH, high(str_paper_end<<1)
 
-rcall print_zy_top
+rcall print_zy_bottom
 
 
-
+main_loop:
 
 
 
@@ -233,11 +235,12 @@ rjmp main_loop
 ;*	desc: transmits mpr to UDR1
 ;***********************************************************
 transmit:
+push mpr
 
 sts UDR1, mpr
 rcall check_UDR1
 
-
+pop mpr
 ret
 
 ;***********************************************************
@@ -245,10 +248,18 @@ ret
 ;*	desc: loads data register with usart reception value
 ;***********************************************************
 recieve:
+push mpr
+in mpr, SREG
+push mpr
+
 
 lds data, UDR1
 rcall check_UDR1
 
+
+pop mpr
+out SREG, mpr
+pop mpr
 ret
 
 ;***********************************************************
