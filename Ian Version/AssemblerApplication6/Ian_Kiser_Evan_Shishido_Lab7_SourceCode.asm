@@ -93,15 +93,14 @@ INIT:
 
 	;UCSR1D: might need to set bits 1:0 but probably not, they control something called transmission and reception flow control
 
-	;UCSR1A gets 0b00100000
+	;UCSR1A need not be loaded
 	;UCSR1B gets 0b10011000 -> enable read interrupt
 	;UCSR1C gets 0b00001110
 	;UBRRH1 gets 0b00000000
 	;UBRRL1 gets $CF -> 207
 
-	ldi mpr, 0b00100000
-	sts UCSR1A, mpr
-	ldi mpr, 0b00011000
+
+	ldi mpr, 0b10011000 ; enable read interrupt
 	sts UCSR1B, mpr
 	ldi mpr, 0b00001110
 	sts UCSR1C, mpr
@@ -241,8 +240,7 @@ push mpr
 
 check_UDR1_not_clear:
 lds mpr, UCSR1A
-andi mpr, 0b00100000 ;only save usart data reg empty flag
-cpi mpr, 0b00100000
+sbis mpr, 0b00100000
 brne check_UDR1_not_clear ;if data reg not empty wait for it to be empty
 
 
@@ -257,7 +255,7 @@ ret
 
 ;***********************************************************
 ;*	Func: welcome
-;*	desc: display welcome screen and poll for PD7
+;*	desc: display welcome screen and poll for PD7, exit when pressed and then released
 ;***********************************************************
 welcome:
 push mpr
