@@ -74,6 +74,13 @@ INIT:
 	ldi mpr, $FF
 	out DDRB, mpr; set PORTB for output 
 
+	;configure external interrupts to trigger on falling edge ie button pressed, pin shorted to ground, for int0 and int1
+	;EICRA gets 0b00001010
+	ldi mpr, 0b00001010
+	sts EICRA, mpr
+
+	 
+
 
 
 	;USART1
@@ -157,6 +164,7 @@ MAIN:
 ;start LED timer
 
 ;enable int 0 (and possibly int 1 if extra credit) in interrupt mask
+;ldi mpr, 
 ;PD4 selects play option via interrupt
 
 ;timer ends
@@ -240,7 +248,7 @@ push mpr
 
 check_UDR1_not_clear:
 lds mpr, UCSR1A
-sbis mpr, 0b00100000
+sbrs mpr, 5
 brne check_UDR1_not_clear ;if data reg not empty wait for it to be empty
 
 
