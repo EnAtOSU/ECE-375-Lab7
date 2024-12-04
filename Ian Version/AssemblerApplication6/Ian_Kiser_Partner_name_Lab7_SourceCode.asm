@@ -22,6 +22,7 @@
 .def    mpr = r16    ; Multi-Purpose Register		
 .def	choice_left = r17
 .def	choice_right = r18 ;makes sense to store choice values seperately from LCD because it will be easier to send between boards and interract with LCD
+
 ;r20-r22 reserved
 
 ; Use this signal code between two boards for their game ready
@@ -188,40 +189,27 @@ transmit_loop:
 ;try to read -> set mpr to ready recieved
 lds mpr, UDR1 ;mpr now either holds ready, or is empty
 ;wait for UDR1 reg empty flag
-not_recieved:
-lds r19, UCSR1A
-andi r19, 0b00100000 ;only save usart data reg empty flag
-cpi r19, 0b00100000
-brne not_recieved ;if data reg not empty wait for it to be empty
+rcall check_UDR1
 
-
-;try to transmit -> must not be done on mpr so we can check afterwards
-ldi r19, SendReady
-sts UDR1, r19
-
+push mpr ;save recieve value
+;transmit ready -> must not be done on mpr so we can check afterwards
+ldi mpr, SendReady
+sts UDR1, mpr
+pop mpr ;restore recieve value
 
 ;again wait for data reg empty flag
-not_sent:
-lds r19, UCSR1A
-andi r19, 0b00100000 ;only save usart data reg empty flag
-cpi r19, 0b00100000
-brne not_sent ;if data reg not empty wait for it to be empty
-
-
+rcall check_UDR1
 
 
 cpi mpr, SendReady
-brne transmit_loop ;loop if mpr is not set 
+brne transmit_loop ;loop if mpr is not set to ready
 ;then read to clear URD1 reg
 lds mpr, UDR1
 
-not_read:
-lds r19, UCSR1A
-andi r19, 0b00100000 ;only save usart data reg empty flag
-cpi r19, 0b00100000
-brne not_read ;if data reg not empty wait for it to be empty
-
+rcall check_UDR1 
 ;continue
+
+rcall LCDClr
 
 
 ldi ZL, low(str_paper<<1)
@@ -243,33 +231,27 @@ rjmp main_loop
 ;*	Functions and Subroutines
 ;***********************************************************
 
-;***********************************************************
-;*	Func: TransmitReady
-;*	desc: transmit the ready signal
-;***********************************************************
-TransmitReady: 
-push mpr
-ldi mpr, SendReady
-sts UDR1, mpr 
 
-TransmitReady_not_complete:
+;***********************************************************
+;*	Func: check_UDR1
+;*	desc: returns once the UDR1 register has been cleared, uses 
+;***********************************************************
+check_UDR1:
+push mpr
+
+check_UDR1_not_clear:
 lds mpr, UCSR1A
-andi mpr, 0b01000000
-cpi mpr, 0b01000000
-brne TransmitReady_not_complete
+andi mpr, 0b00100000 ;only save usart data reg empty flag
+cpi mpr, 0b00100000
+brne check_UDR1_not_clear ;if data reg not empty wait for it to be empty
+
+
 
 pop mpr
 ret
 
-;***********************************************************
-;*	Func: check_recieve
-;*	desc: loops until recieve flag is set then checks if recieve is correct value
-;***********************************************************
-check_recieve:
-push mpr
 
-pop mpr
-ret
+
 
 
 
