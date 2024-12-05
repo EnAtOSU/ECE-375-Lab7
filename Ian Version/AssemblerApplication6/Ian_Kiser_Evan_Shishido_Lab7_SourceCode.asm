@@ -237,7 +237,7 @@ rcall load_choice_right
 rcall print_yz_bottom
 
 
-
+rcall timer_1_5
 ;start shoot
 ;enable EIMSk
 ldi mpr, 1 ;defualt shoot select
