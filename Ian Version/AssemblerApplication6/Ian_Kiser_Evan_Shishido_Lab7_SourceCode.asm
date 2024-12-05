@@ -51,7 +51,9 @@
 		reti
 
 .org	$0028 ;timer counter 1 overflow interrupt
-
+		
+		rcall timer_interrupt
+		reti
 .org	$0032 ; recieve flag interrupt
 rcall recieve
 reti
@@ -138,12 +140,7 @@ INIT:
 	ldi mpr, 0b00000100
 	sts TCCR1B, mpr
 
-		;set TCNT1 so that an overflow is 1.5 seconds
-	ldi mpr, $48
-	sts TCNT1H, mpr
-	ldi mpr, $E4
-	sts TCNT1L, mpr
-
+	
 
 	
 
@@ -159,6 +156,8 @@ INIT:
 ;*  Main Program
 ;***********************************************************
 MAIN:
+sei
+
 
 ldi choice_left, 0
 ldi choice_right, 0
@@ -285,12 +284,92 @@ rcall LED_countdown
 ;timer ends
 ;restart code
 rcall LCDClr
-
 rjmp MAIN
 
 ;***********************************************************
 ;*	Functions and Subroutines
 ;***********************************************************
+
+
+
+;***********************************************************
+;*	Func: led_countdown
+;*	desc: uses interrupts for countdown
+;***********************************************************
+led_countdown:
+push mpr
+
+ldi mpr, 1
+sts TIMSK1, mpr ;overflow interrupt now enabled
+
+in mpr, PORTB
+ori mpr, 0b11110000
+out PORTB, mpr
+
+timer_loop:
+sbic PORTB,7
+rjmp timer_loop
+
+
+
+pop mpr
+ret
+
+
+;***********************************************************
+;*	Func: timer_interrupt
+;*	desc: turns off correct LED in PORTB
+;***********************************************************
+timer_interrupt:
+
+	;set TCNT1 so that an overflow is 1.5 seconds
+	ldi mpr, $48
+	sts TCNT1H, mpr
+	ldi mpr, $E4
+	sts TCNT1L, mpr
+
+
+push mpr
+in mpr, SREG
+push mpr
+
+sbic PORTB, 4
+rjmp B4
+
+sbic PORTB, 5
+rjmp B5
+
+sbic PORTB, 6
+rjmp B6
+
+rjmp B7
+
+
+B4:
+cbi PORTB, 4
+rjmp timer_interrupt_end
+
+B5:
+cbi PORTB, 5
+rjmp timer_interrupt_end
+
+B6:
+cbi PORTB, 6
+rjmp timer_interrupt_end
+
+B7:
+cbi PORTB, 7
+ldi mpr,0
+sts TIMSK1, mpr ;overflow interrupt now disabled
+
+timer_interrupt_end:
+
+
+pop mpr
+out SREG, mpr
+pop mpr
+ret
+
 
 
 ;***********************************************************
@@ -1069,10 +1148,10 @@ ret
 
 
 ;***********************************************************
-;*	Func: led_countdown
-;*	desc: enables the timer counter 1 interrupt so that a countdown via PORTB leds occure
+;*	Func: led_countdown_n
+;*	desc: uses polling for countdown
 ;***********************************************************
-led_countdown:
+led_countdown_n:
 push mpr
 
 in mpr, PORTB
@@ -1094,24 +1173,6 @@ ret
 
 
 
-
-;***********************************************************
-;*	Func: timer_interrupt
-;*	desc: checks PORTB and tunrs of a light if need be
-;***********************************************************
-timer_interrupt:
-push mpr
-in mpr, SREG
-push mpr
-
-
-
-
-pop mpr
-out SREG, mpr
-pop mpr
-ret
-
 ;***********************************************************
 ;*	Func: timer_1_5
 ;*	desc: uses timer counter 1 over flow to count 
@@ -1119,12 +1180,6 @@ ret
 timer_1_5:
 ;push stuff to stack
 push mpr
-
-	;set TCNT1 so that an overflow is 1.5 seconds
-	ldi mpr, $48
-	sts TCNT1H, mpr
-	ldi mpr, $E4
-	sts TCNT1L, mpr
 
 	timer_1_5_NoFlag:
 sbis TIFR1, 0 ;skip loop if TOV1 is set
