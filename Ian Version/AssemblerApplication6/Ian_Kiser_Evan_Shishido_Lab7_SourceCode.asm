@@ -23,8 +23,8 @@
 .def	choice_left = r17
 .def	choice_right = r18 ;makes sense to store choice values seperately from LCD because it will be easier to send between boards and interract with LCD
 .def	data = r19
-
-;r20-r22 reserved
+.def	interrupt_select = r23
+;r20-r22 reserved by LCD driver
 
 ; Use this signal code between two boards for their game ready
 .equ    SendReady = 0b11111111
@@ -42,15 +42,20 @@
 
 .org		$0002 ;int 0, will be tied to PD4, interrupts will need EIMSK, and EICRA/B registers set correctly
 		;select choice left
+		rcall interrupt_left
 		reti
 
 .org		$0004 ;int 1, might be tied to PD5, for extra credit
 		;select choice right
+		rcall interrupt_right
 		reti
+
+.org	$0028 ;timer counter 1 overflow interrupt
 
 .org	$0032 ; recieve flag interrupt
 rcall recieve
 reti
+
 ;.org read interrupt vector on usart 1
 
 .org    $0056                   ; End of Interrupt Vectors
@@ -133,6 +138,12 @@ INIT:
 	ldi mpr, 0b00000100
 	sts TCCR1B, mpr
 
+		;set TCNT1 so that an overflow is 1.5 seconds
+	ldi mpr, $48
+	sts TCNT1H, mpr
+	ldi mpr, $E4
+	sts TCNT1L, mpr
+
 
 	
 
@@ -140,10 +151,7 @@ INIT:
 	rcall LCDInit
 	rcall LCDBacklightOn 
 	rcall LCDClr
-	ldi choice_left, 0
-	ldi choice_right, 0
-	ldi data, 0
-
+	
 
 
 
@@ -152,82 +160,591 @@ INIT:
 ;***********************************************************
 MAIN:
 
+ldi choice_left, 0
+ldi choice_right, 0
+ldi data, 0
+ldi interrupt_select, 0; interrupts now do choice select
+
+sei
 ;launch to welcome screen, poll for PD7
 ;loop until PD7 pressed
+rcall welcome
 
 ;PD7 pressed
 ;begin continuously transmitting ready signal
 ;enable recieve interrupt 
 ;display ready and waiting screen
-
-;ready recieved
-;stop transmitting ready signal
-;check if we have stopped recieving ready signal -> other board has recieved our ready -> both ready
-
-;display game start
-;wait 1.5 seconds
-;start LED timer
-
-;enable int 0 (and possibly int 1 if extra credit) in interrupt mask
-;ldi mpr, 
-;PD4 selects play option via interrupt
-
-;timer ends
-;disable int 0 (and possibly int 1 if extra credit) in interrupt mask
-;begin continously transmitting choice(s), and stop when opponants choice recieved
-;repeat for second choice if doing extra credit
-
-;display choices
-;timer start again
-
-;if doing extra credit have shoot interface
-
-;timer ends
-;display win/lose screen
-;timer start again
-
-;timer ends
-;restart code
-
-
-
-sei
-
-;testing
-;call welcome
-rcall welcome
-
-
-;mpr means somethig past here
 transmit_loop:
 ldi mpr, SendReady
 rcall transmit
 cpi data, SendReady
 brne transmit_loop
 
+;display game start
+rcall LCDClr
+
+;simulated button presses
+
+
+rcall game_start
+ldi mpr, 0b00000011
+out EIMSK, mpr ;make sure pd4 and pd5 on correct interrupts
+;wait 1.5 seconds
+;start LED timer
+rcall LED_countdown
+
+
+
+;timer ends
+;disable int 0 (and possibly int 1 if extra credit) in interrupt mask
+ldi mpr, 0
+out EIMSK, mpr
 rcall LCDClr
 
 
+;choice_left and choice right now hold user choices 
+;store on stack
+push choice_left
+push choice_right;user choices now saved
 
-ldi ZL, low(str_paper<<1)
-ldi ZH, high(str_paper<<1)
+rcall send_recieve_choice_left
 
-ldi YL, low(str_paper_end<<1)
-ldi YH, high(str_paper_end<<1)
+rcall send_recieve_choice_right
 
+
+
+;display opponant choices
+rcall load_choice_left
+rcall print_zy_top
+rcall load_choice_right
+rcall print_yz_top
+
+
+;swap stack values
+pop mpr ;mpr now has user choice right
+pop data ;data now has user choice left
+push choice_left
+push choice_right ;opponant choices now on stack
+
+mov choice_right, mpr 
+mov choice_left, data ;choice registers now have user choices
+
+
+
+;display user choices
+rcall load_choice_left
 rcall print_zy_bottom
+rcall load_choice_right
+rcall print_yz_bottom
 
 
-main_loop:
+
+;start shoot
+;enable EIMSk
+ldi mpr, 1 ;defualt shoot select
+ldi interrupt_select, 1 ;interrupts now do shoot
+ldi mpr, 0b00000011
+out EIMSK, mpr ;
+;timer start again
+
+
+rcall LED_countdown
+
+;timer ends
+;disable EIMSK again
+ldi interrupt_select,0
+out EIMSK, mpr
+ldi interrupt_select,1
+
+;mpr now holds user shoot value, data holds opponant shoot value
+;do shoot func
+cpi mpr, 1
+breq main_do_shoot_left
+cpi mpr, 2
+breq main_do_shoot_right
+
+
+main_do_shoot_left:
+rcall do_shoot_left
+rjmp main_end_do_shoot
+
+main_do_shoot_right:
+rcall do_shoot_right
 
 
 
-rjmp main_loop
+main_end_do_shoot:
+
+
+rcall LCDClr
+;display win/lose screen
+rcall calculate_results
+;timer start again
+rcall LED_countdown
+
+;timer ends
+;restart code
+rcall LCDClr
+
+rjmp MAIN
 
 ;***********************************************************
 ;*	Functions and Subroutines
 ;***********************************************************
 
+
+;***********************************************************
+;*	func: calculate results
+;*	desc: based on choice left and choice right displays the correct win or lose screen 
+;***********************************************************
+calculate_results:
+push mpr
+push choice_left
+push choice_right
+
+
+rcall load_choice_left
+rcall print_zy_bottom
+rcall LCDInit ;werid LCD driver errors happen without this
+
+;left - right
+; 0-0 = 0 tie
+; 0-1 = -1 lose
+; 0-2 = -2 lose < 1
+; 0-3 = -3 lose
+; 1-0 = 1 win
+; 1-1 = 0 tie
+; 1-2 = -1 lose
+; 1-3 = -2 win < 1
+; 2-0 = 2 win < 2
+; 2-1 = 1 win
+; 2-2 = 0 tie
+; 2-3 = -1 lose
+; 3-0 = 3 win
+; 3-1 = 2 lose < 2
+; 3-2 = 1 win
+; 3-3 = 0 tie
+
+
+;0 is tie
+;left is 0 is lose
+;right is 0 is win 
+; -1 is lose
+; -2 is win (lose case is handled by left is 0 is lose)
+; -3 is lose (redundant since left has to be zero here)
+; 1 is win
+; 2 is lose (win case is handled by right is 0 is win)
+; 3 is win (redundant since right has to be zero here)
+
+
+mov mpr, choice_left
+sub mpr, choice_right
+
+cpi mpr, 0
+breq draw
+
+cpi choice_left, 0
+breq lose
+
+cpi choice_right, 0
+breq win
+
+cpi mpr, -1
+breq lose
+
+cpi mpr, -2
+breq win
+
+cpi mpr, 1
+breq win
+
+cpi mpr, 2
+breq lose
+
+
+
+
+
+draw:
+
+ldi ZL, low(str_draw<<1)
+ldi ZH, high(str_draw<<1)
+ldi YL, low(str_draw_end<<1)
+ldi YH, high(str_draw_end<<1)
+
+rcall print_zy_top
+
+rjmp calculate_results_end
+ 
+win:
+
+ldi ZL, low(str_win<<1)
+ldi ZH, high(str_win<<1)
+ldi YL, low(str_win_end<<1)
+ldi YH, high(str_win_end<<1)
+
+rcall print_zy_top
+
+rjmp calculate_results_end
+
+lose:
+ldi ZL, low(str_lose<<1)
+ldi ZH, high(str_lose<<1)
+ldi YL, low(str_lose_end<<1)
+ldi YH, high(str_lose_end<<1)
+
+rcall print_zy_top
+
+calculate_results_end:
+
+pop choice_right
+pop choice_left
+pop mpr
+ret
+
+
+
+
+;***********************************************************
+;*	Func: interrupt_right
+;*	desc: interrupt choice on PD4
+;***********************************************************
+
+interrupt_right:
+
+push mpr
+in mpr, SREG
+push mpr
+
+ldi mpr, 0
+out EIMSK, mpr; disable inerrupts while here
+
+sbrs interrupt_select, 0 ;if 0 bit is set, we want shoot interrupt
+rcall select_choice_right
+
+sbrc interrupt_select, 0; if 0 bit is clear, we want select choice interrupt
+rcall shoot_right
+
+;clear external interrupt flag register
+ldi mpr, 0b00000011 ;clear ints 1 and 2
+out EIFR, mpr
+out EIMSK, mpr
+
+pop mpr
+out SREG, mpr
+pop mpr
+ret
+
+
+;***********************************************************
+;*	Func: interrupt_left
+;*	desc: interrupt choice on PD5
+;***********************************************************
+
+interrupt_left:
+push mpr
+in mpr, SREG
+push mpr
+
+ldi mpr, 0
+out EIMSK, mpr; disable inerrupts while here
+
+sbrs interrupt_select, 0 ;if 0 bit is set, we want shoot interrupt
+rcall select_choice_left
+
+sbrc interrupt_select, 0; if 0 bit is clear, we want select choice interrupt
+rcall shoot_left
+
+;clear external interrupt flag register
+ldi mpr, 0b00000011 ;clear ints 1 and 2
+out EIFR, mpr
+
+out EIMSK, mpr; reenable interrupts
+
+pop mpr
+out SREG, mpr
+pop mpr
+
+ret
+
+
+
+;***********************************************************
+;*	Func: shoot_left
+;*	desc: loads mpr with correct shoot value then sends via usart, then disables interrupts, so only one shoot allowed
+;***********************************************************
+shoot_left:
+
+
+ldi mpr, 0
+out EIMSK, mpr
+
+
+ldi ZL, low(str_clear<<1)
+ldi ZH, high(str_clear<<1)
+
+ldi YL, low(str_clear_end<<1)
+ldi YH, high(str_clear_end<<1)
+
+rcall print_zy_top
+
+
+ldi mpr, 1
+rcall transmit
+
+ret ;save mpr shoot value
+
+
+
+;**************************************************
+;*	func: do_shoot_left
+;*	desc: loads correct values into choice left and choice right, where respectively each is final user choice then final opponant choice
+;**************************************************
+do_shoot_left:
+
+
+
+;data now holds shoot value
+
+
+
+cpi data, 1
+breq do_shoot_left_left
+cpi data, 2
+breq do_shoot_left_right
+
+
+do_shoot_left_left:
+mov choice_left, choice_right
+
+ldi ZL, low(str_clear<<1)
+ldi ZH, high(str_clear<<1)
+
+ldi YL, low(str_clear_end<<1)
+ldi YH, high(str_clear_end<<1)
+
+rcall print_zy_bottom
+
+rjmp do_shoot_left_end_shoot
+
+do_shoot_left_right:
+;nothing needs to be done, left already holds user choice
+
+ldi ZL, low(str_clear<<1)
+ldi ZH, high(str_clear<<1)
+
+ldi YL, low(str_clear_end<<1)
+ldi YH, high(str_clear_end<<1)
+
+rcall print_yz_bottom
+
+do_shoot_left_end_shoot:
+
+;opponant choice now shot and final now in choice_left
+
+
+
+;stack has 
+;opponant left
+;opponant right
+;do shoot call low or high
+;do shoot call high or low
+
+
+;save stack
+
+pop mpr
+pop data ;return call now saved
+pop choice_right ; -> this will be saved
+pop interrupt_select ;-> discard opponant left
+ldi interrupt_select, 1; restore interrupt select
+
+;restore stack
+push data
+push mpr
+
+;stack now restored without opponant choices
+;choice left has user choice, choice right has opponant choice
+
+
+ret
+
+
+;***********************************************************
+;*	Func: shoot_right
+;*	desc: loads mpr with correct shoot value then sends via usart, then disables interrupts, so only one shoot allowed
+;***********************************************************
+shoot_right:
+
+
+ldi mpr, 0
+out EIMSK, mpr
+
+
+ldi ZL, low(str_clear<<1)
+ldi ZH, high(str_clear<<1)
+
+ldi YL, low(str_clear_end<<1)
+ldi YH, high(str_clear_end<<1)
+
+rcall print_yz_top
+
+ldi mpr, 2
+rcall transmit
+
+
+ret ;save mpr shoot value
+
+
+
+;**************************************************
+;*	func: do_shoot_right
+;*	desc: loads correct values into choice left and choice right, where respectively each is final user choice then final opponant choice
+;**************************************************
+do_shoot_right:
+
+;data now holds shoot value
+
+
+
+cpi data, 1
+breq do_shoot_right_left
+cpi data, 2
+breq do_shoot_right_right
+
+
+do_shoot_right_left:
+mov choice_left, choice_right
+
+ldi ZL, low(str_clear<<1)
+ldi ZH, high(str_clear<<1)
+
+ldi YL, low(str_clear_end<<1)
+ldi YH, high(str_clear_end<<1)
+
+rcall print_zy_bottom
+
+rjmp do_shoot_right_end_shoot
+
+do_shoot_right_right:
+;nothing needs to be done, left already holds user choice
+
+
+ldi ZL, low(str_clear<<1)
+ldi ZH, high(str_clear<<1)
+
+ldi YL, low(str_clear_end<<1)
+ldi YH, high(str_clear_end<<1)
+
+rcall print_yz_bottom
+
+do_shoot_right_end_shoot:
+
+;user choice now in choice_left
+
+
+;stack has 
+;opponant left
+;opponant right
+;do shoot call high or low
+;do shoot call low or high
+;saved mpr
+
+;save stack
+pop mpr
+pop data ;ret call now saved
+pop choice_right ; -> this will be discarded
+pop choice_right ; -> discard choice right, save choice left
+
+;restore stack
+push data
+push mpr
+;stack now restored without opponant choices
+;choice left has user choice, choice right has opponant choice
+
+
+ret
+
+
+
+
+
+
+;***********************************************************
+;*	Func: send_recieve_choice_right
+;*	desc: transmits choice left and waits for verfication of reception
+;***********************************************************
+send_recieve_choice_right:
+push mpr
+
+;load data with known value
+;load mpr with choice_left
+;call transmit
+;compare data with value
+;if data not value continue otherwise loop
+
+send_recieve_choice_right_loop:
+ldi data, 0b10000000
+mov mpr, choice_left
+rcall transmit
+cpi data, 0b10000000
+breq send_recieve_choice_right_loop
+
+
+pop mpr
+ret
+
+
+
+;***********************************************************
+;*	Func: send_recieve_choice_left
+;*	desc: transmits choice left and waits for verfication of reception
+;***********************************************************
+send_recieve_choice_left:
+push mpr
+
+;load data with known value
+;load mpr with choice_left
+;call transmit
+;compare data with value
+;if data not value continue otherwise loop
+
+send_recieve_choice_left_loop:
+ldi data, 0b10000000
+mov mpr, choice_left
+rcall transmit
+cpi data, 0b10000000
+breq send_recieve_choice_left_loop
+
+
+pop mpr
+ret
+
+
+
+;***********************************************************
+;*	Func: game_start
+;*	desc: display game start and start countdown 
+;***********************************************************
+game_start:
+push ZL
+push ZH
+push YL
+push YH
+
+ldi ZL, low(str_game<<1)
+ldi ZH, high(str_game<<1)
+ldi YL, low(str_game_end<<1)
+ldi YH, high(str_game_end<<1)
+rcall print_zy_top
+rcall timer_1_5
+
+
+pop YH
+pop YL
+pop ZH
+pop ZL
+ret
 
 
 ;***********************************************************
@@ -237,6 +754,7 @@ rjmp main_loop
 transmit:
 push mpr
 
+rcall check_UDR1
 sts UDR1, mpr
 rcall check_UDR1
 
@@ -335,7 +853,7 @@ ret
 ;***********************************************************
 select_choice_left:
 push mpr
-push choice_right
+
 ;changes made to choice left will be saved globally
 
 ;valid choice values include 1,2,3, for rock paper and scissors respectively. 0 will be initialization value so when button is first pressed rock is shown 
@@ -369,9 +887,6 @@ rcall load_choice_left ;load Z and Y registers with correct string lables
 rcall print_zy_bottom ;print correct choice of string to LCD
 
 
-
-
-pop choice_right
 pop mpr
 ret
 ;end select_choice_left
@@ -438,6 +953,10 @@ ret
 load_choice_left:
 push mpr
 
+
+cpi choice_left, 0
+breq load_choice_left_clear
+
 cpi choice_left, 1
 breq load_choice_left_rock
 
@@ -447,6 +966,15 @@ breq load_choice_left_paper		;find choice_left value
 cpi choice_left, 3
 breq load_choice_left_scissors
 
+load_choice_left_clear:
+
+ldi ZL, low(str_clear<<1)
+ldi ZH, high(str_clear<<1)
+
+ldi YL, low(str_clear_end<<1)
+ldi YH, high(str_clear_end<<1)
+
+rjmp load_choice_left_end
 
 load_choice_left_rock:
 ldi ZL, low(str_rock<<1)
@@ -486,6 +1014,9 @@ ret
 load_choice_right:
 push mpr
 
+cpi choice_right, 0
+breq load_choice_right_clear
+
 cpi choice_right, 1
 breq load_choice_right_rock
 
@@ -495,6 +1026,15 @@ breq load_choice_right_paper		;find choice_left value
 cpi choice_right, 3
 breq load_choice_right_scissors
 
+load_choice_right_clear:
+
+ldi ZL, low(str_clear<<1)
+ldi ZH, high(str_clear<<1)
+
+ldi YL, low(str_clear_end<<1)
+ldi YH, high(str_clear_end<<1)
+
+rjmp load_choice_right_end
 
 load_choice_right_rock:
 ldi ZL, low(str_rock<<1)
@@ -530,7 +1070,7 @@ ret
 
 ;***********************************************************
 ;*	Func: led_countdown
-;*	desc: counts down 6 seconds and displays on led's
+;*	desc: enables the timer counter 1 interrupt so that a countdown via PORTB leds occure
 ;***********************************************************
 led_countdown:
 push mpr
@@ -540,7 +1080,7 @@ ori mpr, 0b11110000
 out PORTB, mpr ;all led's are now set
 
 rcall timer_1_5 ;wait
-cbi PORTB, 4 ;clear bit 4
+cbi PORTB, 4
 rcall timer_1_5 ;repeat for other bits
 cbi PORTB, 5
 rcall timer_1_5
@@ -555,36 +1095,42 @@ ret
 
 
 
+;***********************************************************
+;*	Func: timer_interrupt
+;*	desc: checks PORTB and tunrs of a light if need be
+;***********************************************************
+timer_interrupt:
+push mpr
+in mpr, SREG
+push mpr
 
 
 
 
-
-
-
+pop mpr
+out SREG, mpr
+pop mpr
+ret
 
 ;***********************************************************
 ;*	Func: timer_1_5
-;*	desc: polls timer counter 1 for a 1.5 second timer
+;*	desc: uses timer counter 1 over flow to count 
 ;***********************************************************
 timer_1_5:
 ;push stuff to stack
 push mpr
 
+	;set TCNT1 so that an overflow is 1.5 seconds
+	ldi mpr, $48
+	sts TCNT1H, mpr
+	ldi mpr, $E4
+	sts TCNT1L, mpr
 
-
-ldi mpr, $48
-sts TCNT1H, mpr
-ldi mpr, $E4
-sts TCNT1L, mpr
-
-timer_1_5_NoFlag:
+	timer_1_5_NoFlag:
 sbis TIFR1, 0 ;skip loop if TOV1 is set
 rjmp timer_1_5_NoFlag
 
 sbi TIFR1, 0 ;reset TOV1
-
-;pop stuff from stack
 
 pop mpr
 ret
@@ -639,7 +1185,60 @@ ret
 
 
 
+;***********************************************************
+;*	Func: print_yz_top
+;*	desc: stores string stored in program memory and writes it to the top line of the LCD screen on the right
+;*	REMEMBER: the address stored in z and in y must be initially bit shifted by 1 due to least sig bit being low or high indicator. 
+;*	REMEMBER: you must clear line outside of this function to prevent overwriting
+;*	WARNING: assumes Z stores the address of the beginning of the string and Y stores the end of the string to print.
+;***********************************************************
+print_yz_top:
+push mpr
+push XL
+push XH
+push ZL
+push ZH
+push YL
+push YH
 
+;must call lpm on Z, and need to call at end adress so shift Z->Y, and Y->Z for sake of function
+mov XL, ZL
+mov XH, ZH ;X now temporarily holds old Z
+
+mov ZL, YL
+mov ZH, YH ;Z now holds old Y 
+
+mov YL, XL
+mov YH, XH ;Y now holds old Z via X
+
+ldi XL, LOW(lcd_buffer_addr+16) ;point x to the bottom line of the LCD buffer address in data memory
+ldi XH, HIGH(lcd_buffer_addr+16)
+
+print_yz_top_loop:
+lpm mpr, Z ;load value stored at the address to the beginning of the string (stored in X) to mpr, then inc X to point to next char. ie. first character of string is loaded into mpr
+st X, mpr ;Store that character to the beginning of the LCD buffer, then increment to next spot in LCD buffer
+
+sbiw ZH:ZL, 1
+sbiw XH:XL, 1
+
+
+cp ZL, YL ;compare where Z points (beginning of string) to Y (Current address), we only need Low byte since start and end are definitely not far enough away to cause roll over errors
+brne print_yz_top_loop ;if not at end keep loading LCD buffer
+
+lpm mpr, Z; store last character (dec YL inside loop triggers reset interrupt for some reason)
+st X, mpr
+
+rcall	LCDWrLn1 ;once done write to LCD 
+
+pop YH
+pop YL
+pop ZH
+pop ZL
+pop XH
+pop XL 
+pop mpr
+ret
+;end print_yz_top
 
 
 
@@ -775,13 +1374,15 @@ str_clear:
 .db "        "
 str_clear_end:
 
-str_rock:
-.db	"Rock"		
-str_rock_end:
-
 str_paper:
 .db "paper "
 str_paper_end:
+
+
+str_draw:
+.db "You Draw! "
+str_draw_end:
+
 
 str_scissors:
 .db "scissor "
@@ -795,9 +1396,7 @@ str_win:
 .db "You Win!"
 str_win_end:
 
-str_draw:
-.db "You Draw! "
-str_draw_end:
+
 
 str_welcome1:
 .db "welcome "
@@ -820,7 +1419,9 @@ str_game:
 str_game_end:
 
 
-
+str_rock:
+.db	"Rock"		
+str_rock_end:
 
 ;***********************************************************
 ;*	Additional Program Includes
