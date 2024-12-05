@@ -293,86 +293,6 @@ rjmp MAIN
 
 
 ;***********************************************************
-;*	Func: led_countdown
-;*	desc: uses interrupts for countdown
-;***********************************************************
-led_countdown:
-push mpr
-
-ldi mpr, 1
-sts TIMSK1, mpr ;overflow interrupt now enabled
-
-in mpr, PORTB
-ori mpr, 0b11110000
-out PORTB, mpr
-
-timer_loop:
-sbic PORTB,7
-rjmp timer_loop
-
-
-
-pop mpr
-ret
-
-
-;***********************************************************
-;*	Func: timer_interrupt
-;*	desc: turns off correct LED in PORTB
-;***********************************************************
-timer_interrupt:
-
-	;set TCNT1 so that an overflow is 1.5 seconds
-	ldi mpr, $48
-	sts TCNT1H, mpr
-	ldi mpr, $E4
-	sts TCNT1L, mpr
-
-
-push mpr
-in mpr, SREG
-push mpr
-
-sbic PORTB, 4
-rjmp B4
-
-sbic PORTB, 5
-rjmp B5
-
-sbic PORTB, 6
-rjmp B6
-
-rjmp B7
-
-
-B4:
-cbi PORTB, 4
-rjmp timer_interrupt_end
-
-B5:
-cbi PORTB, 5
-rjmp timer_interrupt_end
-
-B6:
-cbi PORTB, 6
-rjmp timer_interrupt_end
-
-B7:
-cbi PORTB, 7
-ldi mpr,0
-sts TIMSK1, mpr ;overflow interrupt now disabled
-
-timer_interrupt_end:
-
-
-pop mpr
-out SREG, mpr
-pop mpr
-ret
-
-
-
-;***********************************************************
 ;*	func: calculate results
 ;*	desc: based on choice left and choice right displays the correct win or lose screen 
 ;***********************************************************
@@ -480,6 +400,89 @@ pop choice_right
 pop choice_left
 pop mpr
 ret
+
+
+
+;***********************************************************
+;*	Func: led_countdown
+;*	desc: uses interrupts for countdown
+;***********************************************************
+led_countdown:
+push mpr
+
+ldi mpr, 1
+sts TIMSK1, mpr ;overflow interrupt now enabled
+
+in mpr, PORTB
+ori mpr, 0b11110000
+out PORTB, mpr
+
+timer_loop:
+sbic PORTB,7
+rjmp timer_loop
+
+
+
+pop mpr
+ret
+
+
+;***********************************************************
+;*	Func: timer_interrupt
+;*	desc: turns off correct LED in PORTB
+;***********************************************************
+timer_interrupt:
+
+	;set TCNT1 so that an overflow is 1.5 seconds
+	ldi mpr, $48
+	sts TCNT1H, mpr
+	ldi mpr, $E4
+	sts TCNT1L, mpr
+
+
+push mpr
+in mpr, SREG
+push mpr
+
+sbic PORTB, 4
+rjmp B4
+
+sbic PORTB, 5
+rjmp B5
+
+sbic PORTB, 6
+rjmp B6
+
+rjmp B7
+
+
+B4:
+cbi PORTB, 4
+rjmp timer_interrupt_end
+
+B5:
+cbi PORTB, 5
+rjmp timer_interrupt_end
+
+B6:
+cbi PORTB, 6
+rjmp timer_interrupt_end
+
+B7:
+cbi PORTB, 7
+ldi mpr,0
+sts TIMSK1, mpr ;overflow interrupt now disabled
+
+timer_interrupt_end:
+
+
+pop mpr
+out SREG, mpr
+pop mpr
+ret
+
+
+
 
 
 
@@ -933,6 +936,9 @@ ret
 select_choice_left:
 push mpr
 
+sbic PIND, 5
+rjmp select_choice_left_end
+
 ;changes made to choice left will be saved globally
 
 ;valid choice values include 1,2,3, for rock paper and scissors respectively. 0 will be initialization value so when button is first pressed rock is shown 
@@ -965,6 +971,7 @@ rcall print_zy_bottom ;write clear string to left side of LCD
 rcall load_choice_left ;load Z and Y registers with correct string lables
 rcall print_zy_bottom ;print correct choice of string to LCD
 
+select_choice_left_end:
 
 pop mpr
 ret
@@ -979,6 +986,9 @@ ret
 ;***********************************************************
 select_choice_right:
 push mpr
+
+sbic PIND, 4
+rjmp select_choice_right_end
 
 ;changes made to choice left will be saved globally
 
@@ -1012,7 +1022,7 @@ rcall print_yz_bottom ;write clear string to left side of LCD
 rcall load_choice_right ;load Z and Y registers with correct string lables
 rcall print_yz_bottom ;print correct choice of string to LCD
 
-
+select_choice_right_end:
 
 pop mpr
 ret
