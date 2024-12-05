@@ -9,7 +9,7 @@
 ;* 	2. Timer/counter1 Normal mode to create a 1.5-sec delay
 ;***********************************************************
 ;*
-;*	 Author: Ian Kiser, Evan Something
+;*	 Author: Ian Kiser, Evan Shishido
 ;*	   Date: 12/6/2024
 ;*
 ;***********************************************************
@@ -22,6 +22,8 @@
 .def    mpr = r16    ; Multi-Purpose Register		
 .def	choice_left = r17
 .def	choice_right = r18 ;makes sense to store choice values seperately from LCD because it will be easier to send between boards and interract with LCD
+.def	data = r19
+
 ;r20-r22 reserved
 
 ; Use this signal code between two boards for their game ready
@@ -38,13 +40,18 @@
 .org    $0000                   ; Beginning of IVs
 	    rjmp    INIT            	; Reset interrupt
 
-.org		$0002 ;int 0, will be tied to PD4
-		;select choice left
+.org		$0002 ;int 0, will be tied to PD4, interrupts will need EIMSK, and EICRA/B registers set correctly
+		rjmp select_choice_left
 		reti
 
 .org		$0004 ;int 1, might be tied to PD5, for extra credit
 		;select choice right
 		reti
+
+.org	$0032 ; recieve flag interrupt
+rcall recieve
+reti
+;.org read interrupt vector on usart 1
 
 .org    $0056                   ; End of Interrupt Vectors
 
@@ -71,10 +78,17 @@ INIT:
 	ldi mpr, $FF
 	out DDRB, mpr; set PORTB for output 
 
+	;configure external interrupts to trigger on falling edge ie button pressed, pin shorted to ground, for int0 and int1
+	;EICRA gets 0b00001010
+	ldi mpr, 0b00000010
+	sts EICRA, mpr
+	ldi mpr, 0b00000001 ; enable int0 
+	sts EIMSK, mpr
+
 
 
 	;USART1
-	;Set baudrate at 2400bps -> I believe system clock is 8MHz, therefore UBRR gets either 207 or 416 depending on U2Xn by table 18-4 in data sheet
+	;Set baudrate at 2400bps -> I believe system clock is 8MHz, therefore UBRR gets 207 by table 18-4 in data sheet
 	;Enable receiver and transmitter
 	;Set frame format: 8 data bits, 2 stop bits
 	;do not use SBI and CBI, and sbis sbic because of fifo 
@@ -90,12 +104,22 @@ INIT:
 
 	;UCSR1D: might need to set bits 1:0 but probably not, they control something called transmission and reception flow control
 
-	;UCSR1A gets 0b00100000
-	;UCSR1B gets 0bxxx11000
+	;UCSR1A need not be loaded
+	;UCSR1B gets 0b10011000 -> enable read interrupt
 	;UCSR1C gets 0b00001110
+	;UBRRH1 gets 0b00000000
+	;UBRRL1 gets $CF -> 207
 
-	
 
+	ldi mpr, 0b10011000 ; enable read interrupt
+	sts UCSR1B, mpr
+	ldi mpr, 0b00001110
+	sts UCSR1C, mpr
+
+	ldi mpr, 0
+	sts UBRR1H, mpr
+	ldi mpr, $CF
+	sts UBRR1L, mpr
 
 
 	;TIMER/COUNTER1
@@ -118,69 +142,292 @@ INIT:
 	rcall LCDClr
 	ldi choice_left, 0
 	ldi choice_right, 0
+	ldi data, 0
 
-
+	sei
 
 
 ;***********************************************************
 ;*  Main Program
 ;***********************************************************
 MAIN:
+sei
 
-;launch to welcome screen, poll for PD7
-;loop until PD7 pressed
+;testing
+;call welcome
+rcall welcome
+; Sends message to lcd waiting for oppenent.
 
-;PD7 pressed
-;begin continuously transmitting ready signal
-;enable recieve interrupt 
-;display ready and waiting screen
+;mpr means somethig past here
+transmit_loop:
+ldi mpr, SendReady ; loads mp
+rcall transmit	   ; transmits
+cpi data, SendReady	; compares
+brne transmit_loop  ; if not equal loop
+; data has been transmitted and received.
 
-;ready recieved
-;stop transmitting ready signal
-;check if we have stopped recieving ready signal -> other board has recieved our ready -> both ready
+; Game start
+Game_Start:
+ldi ZL, low(str_game<<1)
+ldi ZH, high(str_game<<1)
+ldi YL, low(str_game_end<<1)
+ldi YH, high(str_game_end<<1)
+rcall print_zy_top
+; Game Start printed on top line.
+rcall Choice_Function		; interrupt isnt working maybe cuz not wired together.
 
-;display game start
-;wait 1.5 seconds
-;start LED timer
+; Print Results
+rcall Print_Results
 
-;enable int 0 (and possibly int 1 if extra credit) in interrupt mask
-;PD4 selects play option via interrupt
+; Calculate Results
+rcall Calculate_Results
 
-;timer ends
-;disable int 0 (and possibly int 1 if extra credit) in interrupt mask
-;begin continously transmitting choice(s), and stop when opponants choice recieved
-;repeat for second choice if doing extra credit
-
-;display choices
-;timer start again
-
-;if doing extra credit have shoot interface
-
-;timer ends
-;display win/lose screen
-;timer start again
-
-;timer ends
-;restart code
-
-
-main_loop:
-
-
-
-rjmp main_loop
 
 ;***********************************************************
 ;*	Functions and Subroutines
 ;***********************************************************
+;***********************************************************
+;*	Func: Print_Results
+;*	desc: print results of game
+;***********************************************************
+Print_Results:
+push mpr
+push ZH
+push ZL
+push YH
+push YL
+
+; check what opponent chose
+Opp_Choice:
+cpi data, 1
+breq Opp_Rock
+cpi data, 2 
+breq Opp_Paper
+cpi data, 3
+breq Opp_Scissors
+
+Opp_Rock:
+ldi ZL, low(str_rock<<1)
+ldi ZH, high(str_rock<<1)
+ldi YL, low(str_rock_end<<1)
+ldi YH, high(str_rock_end<<1)
+rcall print_zy_top
+rjmp User_Choice
+
+Opp_Paper:
+ldi ZL, low(str_paper<<1)
+ldi ZH, high(str_paper<<1)
+ldi YL, low(str_paper_end<<1)
+ldi YH, high(str_paper_end<<1)
+rcall print_zy_top
+rjmp User_Choice
+
+Opp_Scissors:
+ldi ZL, low(str_scissors<<1)
+ldi ZH, high(str_scissors<<1)
+ldi YL, low(str_scissors_end<<1)
+ldi YH, high(str_scissors_end<<1)
+rcall print_zy_top
+rjmp User_Choice
+
+User_Choice:
+cpi choice_left, 1
+breq User_Rock
+cpi choice_left, 2
+breq User_Paper
+cpi choice_left, 3
+breq User_Scissors
+
+User_Rock:
+ldi ZL, low(str_rock<<1)
+ldi ZH, high(str_rock<<1)
+ldi YL, low(str_rock_end<<1)
+ldi YH, high(str_rock_end<<1)
+rcall print_zy_bottom
+rjmp Calculate_Results
+
+User_Paper:
+ldi ZL, low(str_paper<<1)
+ldi ZH, high(str_paper<<1)
+ldi YL, low(str_paper_end<<1)
+ldi YH, high(str_paper_end<<1)
+rcall print_zy_bottom
+rjmp Calculate_Results
+
+User_Scissors:
+ldi ZL, low(str_scissors<<1)
+ldi ZH, high(str_scissors<<1)
+ldi YL, low(str_scissors_end<<1)
+ldi YH, high(str_scissors_end<<1)
+rcall print_zy_bottom
+rjmp Calculate_Results
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Calculate_Results:
+mov mpr, data
+cp mpr, choice_left ; compare results
+breq Display_Draw ; Draw
+
+cpi mpr, 1
+breq Opp_Chose_Rock
+cpi mpr, 2 
+breq Opp_Chose_Paper
+cpi mpr, 3
+breq Opp_Chose_Scissors
+
+Opp_Chose_Rock:
+cpi choice_left, 2
+breq User_Win
+cpi choice_left, 3
+breq User_Lost
+
+Opp_Chose_Paper
+cpi choice_left, 1
+breq User_Win
+cpi choice_left, 3
+breq User_Lost
+
+Opp_Chose_Scissors
+cpi choice_left, 1
+breq User_Win
+cpi choice_left, 2
+breq User_Lost
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+User_Win:
+ldi ZL, low(str_win<<1)
+ldi ZH, high(str_win<<1)
+ldi YL, low(str_win_end<<1)
+ldi YH, high(str_win_end<<1)
+rcall print_zy_top
+cpi choice_left, 1
+breq Chose_Rock
+cpi choice_left, 2
+breq Chose_Paper
+cpi choice_left, 3
+breq Chose_Scissors
 
 
+User_Lost:
+ldi ZL, low(str_lose<<1)
+ldi ZH, high(str_lose<<1)
+ldi YL, low(str_lose_end<<1)
+ldi YH, high(str_lsoe_end<<1)
+rcall print_zy_top
+cpi choice_left, 1
+breq Chose_Rock
+cpi choice_left, 2
+breq Chose_Paper
+cpi choice_left, 3
+breq Chose_Scissors
+
+Display_Draw:
+ldi ZL, low(str_draw<<1)
+ldi ZH, high(str_draw<<1)
+ldi YL, low(str_draw_end<<1)
+ldi YH, high(str_draw_end<<1)
+rcall print_zy_top
+cpi choice_left, 1
+breq Chose_Rock
+cpi choice_left, 2
+breq Chose_Paper
+cpi choice_left, 3
+breq Chose_Scissors
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Chose_Rock:
+ldi ZL, low(str_rock<<1)
+ldi ZH, high(str_rock<<1)
+ldi YL, low(str_rock_end<<1)
+ldi YH, high(str_rock_end<<1)
+rcall print_zy_bottom
+rjmp End_Print_Results
+
+Chose_Paper:
+ldi ZL, low(str_paper<<1)
+ldi ZH, high(str_paper<<1)
+ldi YL, low(str_paper_end<<1)
+ldi YH, high(str_paper_end<<1)
+rcall print_zy_bottom
+rjmp End_Print_Results
+
+Chose_Scissors:
+ldi ZL, low(str_scissors<<1)
+ldi ZH, high(str_scissors<<1)
+ldi YL, low(str_scissors_end<<1)
+ldi YH, high(str_scissors_end<<1)
+rcall print_zy_bottom
+rjmp End_Print_Results
+
+End_Print_Results:
+pop YL
+pop YH
+pop ZL
+pop ZH
+pop mpr
+ret
+
+;***********************************************************
+;*	Func: Choice_Function
+;*	desc: allow the user to scroll through different options.
+;***********************************************************
+Choice_Function:
+push mpr
+
+rcall led_countdown
+
+pop mpr
+ret
+
+;***********************************************************
+;*	Func: transmit
+;*	desc: transmits mpr to UDR1
+;***********************************************************
+transmit:
+push mpr
+sts UDR1, mpr
+rcall check_UDR1
+pop mpr
+
+
+ret
+
+;***********************************************************
+;*	Func: recieve
+;*	desc: loads data register with usart reception value
+;***********************************************************
+recieve:
+push mpr
+in mpr, SREG
+push mpr
+lds data, UDR1
+rcall check_UDR1
+
+pop mpr
+out SREG, mpr
+pop mpr
+
+ret
+
+;***********************************************************
+;*	Func: check_UDR1
+;*	desc: returns once the UDR1 register has been cleared, uses 
+;***********************************************************
+check_UDR1:
+push mpr
+
+check_UDR1_not_clear:
+lds mpr, UCSR1A
+sbrs mpr, 5
+brne check_UDR1_not_clear ;if data reg not empty wait for it to be empty
+
+pop mpr
+ret
 
 ;***********************************************************
 ;*	Func: welcome
-;*	desc: display welcome screen and poll for PD7
+;*	desc: display welcome screen and poll for PD7, exit when pressed and then released
 ;***********************************************************
 welcome:
 push mpr
@@ -188,7 +435,6 @@ push mpr
 
 ldi ZL, low(str_welcome1<<1)
 ldi ZH, high(str_welcome1<<1)
-
 ldi YL, low(str_welcome1_end<<1)
 ldi YH, high(str_welcome1_end<<1)
 
@@ -196,7 +442,6 @@ rcall print_zy_top
 
 ldi ZL, low(str_welcome2<<1)
 ldi ZH, high(str_welcome2<<1)
-
 ldi YL, low(str_welcome2_end<<1)
 ldi YH, high(str_welcome2_end<<1)
 
@@ -212,33 +457,25 @@ nop ;avoid some debouncing
 welcome_pressed:
 sbis PIND, PD7
 rjmp welcome_pressed
-
-// FUNCTION Transmit
-rcall Transmit
-
-
-
 ;PD7 is now released
+
 rcall LCDClr
 
+ldi ZL, low(str_start1<<1)
+ldi ZH, high(str_start1<<1)
+ldi YL, low(str_start1_end<<1)
+ldi YH, high(str_start1_end<<1)
+rcall print_zy_top
 
+ldi ZL, low(str_start2<<1)
+ldi ZH, high(str_start2<<1)
+ldi YL, low(str_start2_end<<1)
+ldi YH, high(str_start2_end<<1)
+rcall print_zy_bottom
+
+;rcall LCDClr
 
 pop mpr
-ret
-
-
-
-;***********************************************************
-;*	Func: TransmitReady
-;*	desc: transmit the ready signal
-;***********************************************************
-TransmitReady: 
-;check to see if UDRE1 is set
-sbis	UCSR1A, UDRE1
-;jump back up if not set
-rjmp TransmitReady
-;send ready
-sts UDR1, SendReady 
 ret
 
 ;***********************************************************
@@ -467,14 +704,6 @@ ret
 
 
 
-
-
-
-
-
-
-
-
 ;***********************************************************
 ;*	Func: timer_1_5
 ;*	desc: polls timer counter 1 for a 1.5 second timer
@@ -482,8 +711,6 @@ ret
 timer_1_5:
 ;push stuff to stack
 push mpr
-
-
 
 ldi mpr, $48
 sts TCNT1H, mpr
@@ -501,12 +728,6 @@ sbi TIFR1, 0 ;reset TOV1
 pop mpr
 ret
 ;end timer_1_5
-
-
-
-
-
-
 
 
 ;***********************************************************
