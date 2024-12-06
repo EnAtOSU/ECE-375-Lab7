@@ -169,6 +169,9 @@ sei
 ;loop until PD7 pressed
 rcall welcome
 
+
+;welcome start
+
 ;PD7 pressed
 ;begin continuously transmitting ready signal
 ;enable recieve interrupt 
@@ -187,6 +190,12 @@ rcall LCDClr
 rcall game_start
 ldi mpr, 0b00000011
 out EIMSK, mpr ;make sure pd4 and pd5 on correct interrupts
+
+;welcome end
+
+;select start
+
+
 ;wait 1.5 seconds
 ;start LED timer
 rcall LED_countdown
@@ -199,15 +208,38 @@ ldi mpr, 0
 out EIMSK, mpr
 rcall LCDClr
 
+;select end
+
+
+
+
+;transmit select start
 
 ;choice_left and choice right now hold user choices 
 ;store on stack
 push choice_left
 push choice_right;user choices now saved
 
+ldi data, 0b10000000 ;like verify in transmit, but needed to ensure read was succsessful
 rcall send_recieve_choice_left
 
+main_loop_recieve_left:
+rcall check_UDR1
+cpi data, 0b10000000
+breq main_loop_recieve_left ;wait until left recieved
+
+;data now holds opponant choice left
+mov choice_left, data; choice left now holds opponant choice left
+
+ldi data, 0b10000000
 rcall send_recieve_choice_right
+
+main_loop_recieve_choice_right:
+rcall check_UDR1
+cpi data, 0b10000000
+breq main_loop_recieve_choice_right
+
+mov choice_right, data; choice right now holds opponant choice right
 
 
 
@@ -228,8 +260,7 @@ push choice_right ;opponant choices now on stack
 mov choice_right, mpr 
 mov choice_left, data ;choice registers now have user choices
 
-
-
+rcall LCDInit
 ;display user choices
 rcall load_choice_left
 rcall print_zy_bottom
@@ -237,8 +268,20 @@ rcall load_choice_right
 rcall print_yz_bottom
 
 
+;transmit select end
+
+
+
 rcall timer_1_5
-;start shoot
+
+
+
+;shoot start
+
+
+
+
+
 ;enable EIMSk
 ldi mpr, 1 ;defualt shoot select
 ldi interrupt_select, 1 ;interrupts now do shoot
@@ -255,6 +298,10 @@ ldi interrupt_select,0
 out EIMSK, mpr
 ldi interrupt_select,1
 
+;shoot end
+
+
+;transmit shoot start
 ;mpr now holds user shoot value, data holds opponant shoot value
 ;do shoot func
 cpi mpr, 3
@@ -274,6 +321,10 @@ rcall do_shoot_right
 
 main_end_do_shoot:
 
+;transmit shoot end
+
+
+;finish
 
 rcall LCDClr
 ;display win/lose screen
@@ -542,6 +593,32 @@ ret
 
 
 ;***********************************************************
+;*	Func: transmit
+;*	desc: transmits mpr to UDR1
+;***********************************************************
+transmit:
+push mpr
+
+transmit_loop:
+
+rcall check_UDR1
+cli ;disable recieve interrupt
+
+ldi data, 0b10000000
+sts UDR1, mpr
+rcall check_UDR1
+sei
+nop
+rcall check_UDR1; if recieve happens give it time to finish
+cpi data, 0b10000000
+breq transmit_loop
+
+
+
+pop mpr
+ret
+
+;***********************************************************
 ;*	Func: shoot_left
 ;*	desc: loads mpr with correct shoot value then sends via usart, then disables interrupts, so only one shoot allowed
 ;***********************************************************
@@ -564,6 +641,36 @@ rcall print_zy_top
 
 ldi mpr, 3
 rcall transmit
+
+ret ;save mpr shoot value
+
+
+
+;***********************************************************
+;*	Func: shoot_right
+;*	desc: loads mpr with correct shoot value then sends via usart, then disables interrupts, so only one shoot allowed
+;***********************************************************
+shoot_right:
+
+
+ldi mpr, 0
+out EIMSK, mpr
+
+
+ldi ZL, low(str_clear<<1)
+ldi ZH, high(str_clear<<1)
+
+ldi YL, low(str_clear_end<<1)
+ldi YH, high(str_clear_end<<1)
+
+rcall print_yz_top
+
+
+
+
+ldi mpr, 4
+rcall transmit
+
 
 ret ;save mpr shoot value
 
@@ -643,33 +750,6 @@ push mpr
 ret
 
 
-;***********************************************************
-;*	Func: shoot_right
-;*	desc: loads mpr with correct shoot value then sends via usart, then disables interrupts, so only one shoot allowed
-;***********************************************************
-shoot_right:
-
-
-ldi mpr, 0
-out EIMSK, mpr
-
-
-ldi ZL, low(str_clear<<1)
-ldi ZH, high(str_clear<<1)
-
-ldi YL, low(str_clear_end<<1)
-ldi YH, high(str_clear_end<<1)
-
-rcall print_yz_top
-
-
-
-
-ldi mpr, 4
-rcall transmit
-
-
-ret ;save mpr shoot value
 
 
 
@@ -820,23 +900,7 @@ pop ZL
 ret
 
 
-;***********************************************************
-;*	Func: transmit
-;*	desc: transmits mpr to UDR1
-;***********************************************************
-transmit:
-push mpr
 
-transmit_loop:
-ldi data, 0b10000000
-rcall check_UDR1
-sts UDR1, mpr
-rcall check_UDR1
-cpi data, 0b10000000
-breq transmit_loop
-
-pop mpr
-ret
 
 ;***********************************************************
 ;*	Func: recieve
