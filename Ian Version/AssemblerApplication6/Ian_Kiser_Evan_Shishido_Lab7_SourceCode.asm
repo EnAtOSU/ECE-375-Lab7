@@ -164,7 +164,7 @@ ldi choice_right, 0
 ldi data, 0
 ldi interrupt_select, 0; interrupts now do choice select
 
-sei
+
 ;launch to welcome screen, poll for PD7
 ;loop until PD7 pressed
 rcall welcome
@@ -204,68 +204,66 @@ rcall LED_countdown
 
 ;timer ends
 ;disable int 0 (and possibly int 1 if extra credit) in interrupt mask
+cli
 ldi mpr, 0
 out EIMSK, mpr
+
 rcall LCDClr
 
 ;select end
 
 
-
+clr XH
+clr XL
 
 ;transmit select start
 
 ;choice_left and choice right now hold user choices 
-;store on stack
-push choice_left
-push choice_right;user choices now saved
-
-ldi data, 0b10000000 ;like verify in transmit, but needed to ensure read was succsessful
-rcall send_recieve_choice_left
-
-main_loop_recieve_left:
-rcall check_UDR1
-cpi data, 0b10000000
-breq main_loop_recieve_left ;wait until left recieved
+mov mpr, choice_left
+rcall transmit
 
 ;data now holds opponant choice left
-mov choice_left, data; choice left now holds opponant choice left
+mov XL, data; XL now holds opponant choice left
 
-ldi data, 0b10000000
-rcall send_recieve_choice_right
-
-main_loop_recieve_choice_right:
-rcall check_UDR1
-cpi data, 0b10000000
-breq main_loop_recieve_choice_right
-
-mov choice_right, data; choice right now holds opponant choice right
+rcall timer_1_5
 
 
 
-;display opponant choices
-rcall LCDInit
-rcall load_choice_left
-rcall print_zy_top
-rcall load_choice_right
-rcall print_yz_top
+mov mpr, choice_right
+rcall transmit
+
+mov XH, data; XH now holds opponant choice right
 
 
-;swap stack values
-pop mpr ;mpr now has user choice right
-pop data ;data now has user choice left
-push choice_left
-push choice_right ;opponant choices now on stack
-
-mov choice_right, mpr 
-mov choice_left, data ;choice registers now have user choices
-
-rcall LCDInit
 ;display user choices
 rcall load_choice_left
 rcall print_zy_bottom
 rcall load_choice_right
 rcall print_yz_bottom
+
+push choice_left
+push choice_right
+
+
+mov choice_left, XL
+mov choice_right, XH
+
+;display opponant choices
+
+
+rcall load_choice_left
+rcall print_zy_top
+
+rcall load_choice_right
+rcall print_yz_top
+
+
+;restore from stack
+pop choice_right
+pop choice_left
+
+
+
 
 
 ;transmit select end
@@ -280,7 +278,7 @@ rcall timer_1_5
 
 
 
-
+sei
 
 ;enable EIMSk
 ldi mpr, 1 ;defualt shoot select
@@ -299,7 +297,7 @@ out EIMSK, mpr
 ldi interrupt_select,1
 
 ;shoot end
-
+rcall timer_1_5
 
 ;transmit shoot start
 ;mpr now holds user shoot value, data holds opponant shoot value
@@ -321,6 +319,7 @@ rcall do_shoot_right
 
 main_end_do_shoot:
 
+rcall timer_1_5
 ;transmit shoot end
 
 
@@ -330,16 +329,20 @@ rcall LCDClr
 ;display win/lose screen
 rcall calculate_results
 ;timer start again
+
 rcall LED_countdown
 
 ;timer ends
 ;restart code
 rcall LCDClr
+ldi mpr, 0
+out EIMSK, mpr
 rjmp MAIN
 
 ;***********************************************************
 ;*	Functions and Subroutines
 ;***********************************************************
+
 
 
 
@@ -610,7 +613,7 @@ rcall check_UDR1
 sei
 nop
 rcall check_UDR1; if recieve happens give it time to finish
-cpi data, 0b10000000
+cpi data, 0b10000000 ;recieve complete or not
 breq transmit_loop
 
 
@@ -722,29 +725,8 @@ do_shoot_left_end_shoot:
 
 ;opponant choice now shot and final now in choice_left
 
+mov choice_right, XH
 
-
-;stack has 
-;opponant left
-;opponant right
-;do shoot call low or high
-;do shoot call high or low
-
-
-;save stack
-
-pop mpr
-pop data ;return call now saved
-pop choice_right ; -> this will be saved
-pop interrupt_select ;-> discard opponant left
-ldi interrupt_select, 1; restore interrupt select
-
-;restore stack
-push data
-push mpr
-
-;stack now restored without opponant choices
-;choice left has user choice, choice right has opponant choice
 
 
 ret
@@ -798,25 +780,7 @@ do_shoot_right_end_shoot:
 
 ;user choice now in choice_left
 
-
-;stack has 
-;opponant left
-;opponant right
-;do shoot call high or low
-;do shoot call low or high
-;saved mpr
-
-;save stack
-pop mpr
-pop data ;ret call now saved
-pop choice_right ; -> this will be discarded
-pop choice_right ; -> discard choice right, save choice left
-
-;restore stack
-push data
-push mpr
-;stack now restored without opponant choices
-;choice left has user choice, choice right has opponant choice
+mov choice_right, XL
 
 
 ret
@@ -833,13 +797,6 @@ ret
 send_recieve_choice_right:
 push mpr
 
-;load data with known value
-;load mpr with choice_left
-;call transmit
-;compare data with value
-;if data not value continue otherwise loop
-
-send_recieve_choice_right_loop:
 
 mov mpr, choice_left
 rcall transmit
@@ -858,11 +815,6 @@ ret
 send_recieve_choice_left:
 push mpr
 
-;load data with known value
-;load mpr with choice_left
-;call transmit
-;compare data with value
-;if data not value continue otherwise loop
 
 
 mov mpr, choice_left
@@ -1005,7 +957,7 @@ rjmp select_choice_left_end
 ;otherwise increment choice left
 
 cpi choice_left, 3
-breq select_choice_left_rollover ;if at two do not increment
+breq select_choice_left_rollover ;if at three do not increment
 
 inc choice_left
 
