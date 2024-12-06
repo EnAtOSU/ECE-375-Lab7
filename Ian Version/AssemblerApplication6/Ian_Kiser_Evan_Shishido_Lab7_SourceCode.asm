@@ -173,11 +173,10 @@ rcall welcome
 ;begin continuously transmitting ready signal
 ;enable recieve interrupt 
 ;display ready and waiting screen
-transmit_loop:
+
 ldi mpr, SendReady
 rcall transmit
-cpi data, SendReady
-brne transmit_loop
+
 
 ;display game start
 rcall LCDClr
@@ -213,6 +212,7 @@ rcall send_recieve_choice_right
 
 
 ;display opponant choices
+rcall LCDInit
 rcall load_choice_left
 rcall print_zy_top
 rcall load_choice_right
@@ -760,11 +760,10 @@ push mpr
 ;if data not value continue otherwise loop
 
 send_recieve_choice_right_loop:
-ldi data, 0b10000000
+
 mov mpr, choice_left
 rcall transmit
-cpi data, 0b10000000
-breq send_recieve_choice_right_loop
+
 
 
 pop mpr
@@ -785,12 +784,10 @@ push mpr
 ;compare data with value
 ;if data not value continue otherwise loop
 
-send_recieve_choice_left_loop:
-ldi data, 0b10000000
+
 mov mpr, choice_left
 rcall transmit
-cpi data, 0b10000000
-breq send_recieve_choice_left_loop
+
 
 
 pop mpr
@@ -830,9 +827,13 @@ ret
 transmit:
 push mpr
 
+transmit_loop:
+ldi data, 0b10000000
 rcall check_UDR1
 sts UDR1, mpr
 rcall check_UDR1
+cpi data, 0b10000000
+breq transmit_loop
 
 pop mpr
 ret
