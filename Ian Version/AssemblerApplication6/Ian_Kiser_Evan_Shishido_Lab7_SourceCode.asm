@@ -257,9 +257,9 @@ ldi interrupt_select,1
 
 ;mpr now holds user shoot value, data holds opponant shoot value
 ;do shoot func
-cpi mpr, 1
+cpi mpr, 3
 breq main_do_shoot_left
-cpi mpr, 2
+cpi mpr, 4
 breq main_do_shoot_right
 
 
@@ -361,7 +361,17 @@ cpi mpr, 2
 breq lose
 
 
+ 
+win:
 
+ldi ZL, low(str_win<<1)
+ldi ZH, high(str_win<<1)
+ldi YL, low(str_win_end<<1)
+ldi YH, high(str_win_end<<1)
+
+rcall print_zy_top
+
+rjmp calculate_results_end
 
 
 draw:
@@ -374,17 +384,7 @@ ldi YH, high(str_draw_end<<1)
 rcall print_zy_top
 
 rjmp calculate_results_end
- 
-win:
 
-ldi ZL, low(str_win<<1)
-ldi ZH, high(str_win<<1)
-ldi YL, low(str_win_end<<1)
-ldi YH, high(str_win_end<<1)
-
-rcall print_zy_top
-
-rjmp calculate_results_end
 
 lose:
 ldi ZL, low(str_lose<<1)
@@ -498,8 +498,7 @@ push mpr
 in mpr, SREG
 push mpr
 
-ldi mpr, 0
-out EIMSK, mpr; disable inerrupts while here
+
 
 sbrs interrupt_select, 0 ;if 0 bit is set, we want shoot interrupt
 rcall select_choice_right
@@ -507,10 +506,7 @@ rcall select_choice_right
 sbrc interrupt_select, 0; if 0 bit is clear, we want select choice interrupt
 rcall shoot_right
 
-;clear external interrupt flag register
-ldi mpr, 0b00000011 ;clear ints 1 and 2
-out EIFR, mpr
-out EIMSK, mpr
+
 
 pop mpr
 out SREG, mpr
@@ -528,8 +524,7 @@ push mpr
 in mpr, SREG
 push mpr
 
-ldi mpr, 0
-out EIMSK, mpr; disable inerrupts while here
+
 
 sbrs interrupt_select, 0 ;if 0 bit is set, we want shoot interrupt
 rcall select_choice_left
@@ -537,11 +532,6 @@ rcall select_choice_left
 sbrc interrupt_select, 0; if 0 bit is clear, we want select choice interrupt
 rcall shoot_left
 
-;clear external interrupt flag register
-ldi mpr, 0b00000011 ;clear ints 1 and 2
-out EIFR, mpr
-
-out EIMSK, mpr; reenable interrupts
 
 pop mpr
 out SREG, mpr
@@ -571,7 +561,8 @@ ldi YH, high(str_clear_end<<1)
 rcall print_zy_top
 
 
-ldi mpr, 1
+
+ldi mpr, 3
 rcall transmit
 
 ret ;save mpr shoot value
@@ -671,7 +662,10 @@ ldi YH, high(str_clear_end<<1)
 
 rcall print_yz_top
 
-ldi mpr, 2
+
+
+
+ldi mpr, 4
 rcall transmit
 
 
